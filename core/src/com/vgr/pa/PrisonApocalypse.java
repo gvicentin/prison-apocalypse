@@ -1,16 +1,24 @@
 package com.vgr.pa;
 
+import com.badlogic.ashley.core.Engine;
+import com.badlogic.ashley.core.Entity;
+import com.badlogic.ashley.core.PooledEngine;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.Animation;
+import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.vgr.pa.asset.Assets;
+import com.vgr.pa.core.EntityRenderSystem;
+import com.vgr.pa.core.SpriteComponent;
+import com.vgr.pa.core.TransformComponent;
 
 public class PrisonApocalypse extends ApplicationAdapter {
 
@@ -21,8 +29,7 @@ public class PrisonApocalypse extends ApplicationAdapter {
 
 	private SpriteBatch batch;
 
-	private Animation<TextureRegion> anim;
-	private float elapsed = 0f;
+	private Engine engine;
 
 	@Override
 	public void create () {
@@ -32,22 +39,24 @@ public class PrisonApocalypse extends ApplicationAdapter {
 		batch = new SpriteBatch();
 
 		Assets.instance.finishLoading();
-		anim = Assets.instance.prisoner.animationsMap.get("run");
+
+		// engine
+		engine = new PooledEngine();
+		engine.addSystem(new EntityRenderSystem(batch, mainCamera));
+
+		// player
+		Entity player = new Entity();
+		SpriteComponent playerSprite = (SpriteComponent) player.addAndReturn(new SpriteComponent());
+		playerSprite.region = Assets.instance.prisoner.animationsMap.get("idle").getKeyFrame(0);
+		TransformComponent playerTransform = (TransformComponent) player.addAndReturn(new TransformComponent());
+		playerTransform.rotation = 90;
+		engine.addEntity(player);
 	}
 
 	@Override
 	public void render () {
 		ScreenUtils.clear(Constants.BACKGROUND_COLOR);
-
-		batch.setProjectionMatrix(mainCamera.combined);
-		batch.setTransformMatrix(mainCamera.view);
-
-		elapsed += Gdx.graphics.getDeltaTime();
-		TextureRegion currentFrame = anim.getKeyFrame(elapsed);
-
-		batch.begin();
-		batch.draw(currentFrame, 0, 0, 1, 1);
-		batch.end();
+		engine.update(Gdx.graphics.getDeltaTime());
 	}
 
 	@Override
