@@ -11,6 +11,8 @@ public class FilePaths {
     // Maps
     public static final String TEXTURE_PRISON_TILESET = "map/prison_tileset.png";
 
+    public static final String MAP_SANDBOX = "map/sandbox-map.tmx";
+
     // Objects
     public static final String TEXTURE_BARREL = "object/barrel.png";
     public static final String TEXTURE_LOCKER = "object/locker.png";

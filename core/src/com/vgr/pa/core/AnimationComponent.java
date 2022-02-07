@@ -25,8 +25,10 @@ public class AnimationComponent implements Component, Pool.Poolable {
     }
 
     public void transition(int nextAnimation) {
-        timer = 0f;
-        currentAnimation = nextAnimation;
+        if (nextAnimation != currentAnimation) {
+            timer = 0f;
+            currentAnimation = nextAnimation;
+        }
     }
 
     public TextureRegion getCurrentFrame() {

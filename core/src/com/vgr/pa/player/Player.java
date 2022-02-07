@@ -14,21 +14,23 @@ public class Player extends Entity {
     public static final int ANIM_DIE = 3;
 
     public Player() {
-        createBaseComponents();
-        createAnimationComponent();
+        createCoreComponents();
+        createPlayerComponents();
     }
 
-    private void createBaseComponents() {
+    private void createCoreComponents() {
         add(new TransformComponent());
         add(new SpriteComponent());
-    }
 
-    private void createAnimationComponent() {
+        // animation component
         AnimationComponent animationComp = (AnimationComponent) addAndReturn(new AnimationComponent());
         animationComp.animationMap.put(ANIM_IDLE, Assets.instance.prisoner.idleAnimation);
         animationComp.animationMap.put(ANIM_RUN, Assets.instance.prisoner.runAnimation);
         animationComp.animationMap.put(ANIM_HIT, Assets.instance.prisoner.hitAnimation);
         animationComp.animationMap.put(ANIM_DIE, Assets.instance.prisoner.dieAnimation);
-        animationComp.transition(ANIM_RUN);
+    }
+
+    private void createPlayerComponents() {
+        add(new PlayerComponent());
     }
 }

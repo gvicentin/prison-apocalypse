@@ -4,16 +4,16 @@ import com.badlogic.ashley.core.ComponentMapper;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.SortedIteratingSystem;
-import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Affine2;
 import com.badlogic.gdx.math.Vector2;
+import com.vgr.pa.Constants;
 
 public class EntityRenderSystem extends SortedIteratingSystem {
 
     private SpriteBatch batch;
-    private Camera camera;
+    private OrthographicCamera camera;
 
     // mappers
     private ComponentMapper<SpriteComponent> texMapper;
@@ -26,9 +26,9 @@ public class EntityRenderSystem extends SortedIteratingSystem {
     private Vector2 texScale;
     private Vector2 texCenterTranslation;
 
-    public EntityRenderSystem(SpriteBatch batch, Camera camera) {
+    public EntityRenderSystem(SpriteBatch batch, OrthographicCamera camera) {
         super(Family.all(SpriteComponent.class, TransformComponent.class).get(),
-                new ZComparator(), 1000);
+                new ZComparator(), Constants.PRIORITY_ENTITY_RENDER);
 
         this.batch = batch;
         this.camera = camera;

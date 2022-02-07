@@ -4,6 +4,7 @@ import com.badlogic.ashley.core.ComponentMapper;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
+import com.vgr.pa.Constants;
 
 public class AnimationSystem extends IteratingSystem {
 
@@ -14,7 +15,8 @@ public class AnimationSystem extends IteratingSystem {
     private AnimationComponent animationComp;
 
     public AnimationSystem() {
-        super(Family.all(SpriteComponent.class, AnimationComponent.class).get());
+        super(Family.all(SpriteComponent.class, AnimationComponent.class).get(),
+                Constants.PRIORITY_ANIMATION);
 
         this.spriteMapper = ComponentMapper.getFor(SpriteComponent.class);
         this.animationMapper = ComponentMapper.getFor(AnimationComponent.class);

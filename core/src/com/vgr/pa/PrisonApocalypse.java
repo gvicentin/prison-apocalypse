@@ -13,13 +13,15 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.vgr.pa.asset.Assets;
 import com.vgr.pa.core.*;
+import com.vgr.pa.map.MapSystem;
 import com.vgr.pa.player.Player;
+import com.vgr.pa.player.PlayerController;
 
 public class PrisonApocalypse extends ApplicationAdapter {
 
 	private static final String TAG = PrisonApocalypse.class.getSimpleName();
 
-	private Camera mainCamera;
+	private OrthographicCamera mainCamera;
 	private Viewport viewport;
 
 	private SpriteBatch batch;
@@ -35,8 +37,12 @@ public class PrisonApocalypse extends ApplicationAdapter {
 
 		Assets.instance.finishLoading();
 
+		mainCamera.position.set(20f, 20f, 0);
+
 		// engine
 		engine = new PooledEngine();
+		engine.addSystem(new MapSystem(mainCamera, Assets.instance.sandboxMap));
+		engine.addSystem(new PlayerController());
 		engine.addSystem(new AnimationSystem());
 		engine.addSystem(new EntityRenderSystem(batch, mainCamera));
 

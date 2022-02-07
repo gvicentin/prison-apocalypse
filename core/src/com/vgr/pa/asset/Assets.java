@@ -2,9 +2,12 @@ package com.vgr.pa.asset;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.AssetManager;
+import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.maps.tiled.TiledMap;
+import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.TimeUtils;
@@ -17,6 +20,8 @@ public class Assets implements Disposable {
     public Character prisoner;
     public Character zombiePolicemen;
     public Character zombiePrisoner;
+
+    public TiledMap sandboxMap;
 
     private static final String TAG = Assets.class.getSimpleName();
 
@@ -44,11 +49,16 @@ public class Assets implements Disposable {
     }
 
     private void load() {
+        manager.setLoader(TiledMap.class, new TmxMapLoader(new InternalFileHandleResolver()));
+
         // characters
         manager.load(FilePaths.TEXTURE_POLICEMEN, Texture.class);
         manager.load(FilePaths.TEXTURE_PRISONER, Texture.class);
         manager.load(FilePaths.TEXTURE_ZOMBIE_POLICEMEN, Texture.class);
         manager.load(FilePaths.TEXTURE_ZOMBIE_PRISONER, Texture.class);
+
+        // map
+        manager.load(FilePaths.MAP_SANDBOX, TiledMap.class);
     }
 
     private Array<TextureRegion> createCharacterRegions(Texture tex, int frameStart, int frameEnd) {
@@ -129,6 +139,9 @@ public class Assets implements Disposable {
         createPolicemen();
         createPrisoner();
         // TODO: load all characters
+
+        // map
+        this.sandboxMap = manager.get(FilePaths.MAP_SANDBOX);
     }
 
     @Override
