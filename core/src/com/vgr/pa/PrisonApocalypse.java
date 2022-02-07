@@ -7,18 +7,13 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.g2d.Animation;
-import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.vgr.pa.asset.Assets;
-import com.vgr.pa.core.EntityRenderSystem;
-import com.vgr.pa.core.SpriteComponent;
-import com.vgr.pa.core.TransformComponent;
+import com.vgr.pa.core.*;
+import com.vgr.pa.player.Player;
 
 public class PrisonApocalypse extends ApplicationAdapter {
 
@@ -42,15 +37,11 @@ public class PrisonApocalypse extends ApplicationAdapter {
 
 		// engine
 		engine = new PooledEngine();
+		engine.addSystem(new AnimationSystem());
 		engine.addSystem(new EntityRenderSystem(batch, mainCamera));
 
-		// player
-		Entity player = new Entity();
-		SpriteComponent playerSprite = (SpriteComponent) player.addAndReturn(new SpriteComponent());
-		playerSprite.region = Assets.instance.prisoner.animationsMap.get("idle").getKeyFrame(0);
-		TransformComponent playerTransform = (TransformComponent) player.addAndReturn(new TransformComponent());
-		playerTransform.rotation = 90;
-		engine.addEntity(player);
+		// entities
+		engine.addEntity(new Player());
 	}
 
 	@Override

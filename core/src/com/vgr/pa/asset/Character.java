@@ -64,9 +64,9 @@ public class Character {
 
     /** End of Prisoner */
 
-    public HashMap<String, Animation<TextureRegion>> animationsMap;
+    public Animation<TextureRegion> idleAnimation;
+    public Animation<TextureRegion> runAnimation;
+    public Animation<TextureRegion> hitAnimation;
+    public Animation<TextureRegion> dieAnimation;
 
-    public Character() {
-        animationsMap = new HashMap<>();
-    }
 }
