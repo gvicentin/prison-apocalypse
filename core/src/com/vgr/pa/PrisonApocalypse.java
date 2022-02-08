@@ -14,6 +14,8 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import com.vgr.pa.asset.Assets;
 import com.vgr.pa.core.*;
 import com.vgr.pa.map.MapSystem;
+import com.vgr.pa.player.CameraComponent;
+import com.vgr.pa.player.CameraController;
 import com.vgr.pa.player.Player;
 import com.vgr.pa.player.PlayerController;
 
@@ -37,17 +39,21 @@ public class PrisonApocalypse extends ApplicationAdapter {
 
 		Assets.instance.finishLoading();
 
-		mainCamera.position.set(20f, 20f, 0);
-
-		// engine
 		engine = new PooledEngine();
-		engine.addSystem(new MapSystem(mainCamera, Assets.instance.sandboxMap));
-		engine.addSystem(new PlayerController());
-		engine.addSystem(new AnimationSystem());
-		engine.addSystem(new EntityRenderSystem(batch, mainCamera));
 
 		// entities
+		Entity camera = engine.createEntity();
+		CameraComponent cameraComp = (CameraComponent) camera.addAndReturn(engine.createComponent(CameraComponent.class));
+		cameraComp.camera = mainCamera;
+		engine.addEntity(camera);
 		engine.addEntity(new Player());
+
+		// systems
+		engine.addSystem(new MapSystem(mainCamera, Assets.instance.sandboxMap));
+		engine.addSystem(new PlayerController());
+		engine.addSystem(new CameraController());
+		engine.addSystem(new AnimationSystem());
+		engine.addSystem(new EntityRenderSystem(batch, mainCamera));
 	}
 
 	@Override

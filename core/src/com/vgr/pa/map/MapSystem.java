@@ -1,7 +1,6 @@
 package com.vgr.pa.map;
 
 import com.badlogic.ashley.core.EntitySystem;
-import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapRenderer;

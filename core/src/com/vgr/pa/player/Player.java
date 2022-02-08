@@ -19,7 +19,9 @@ public class Player extends Entity {
     }
 
     private void createCoreComponents() {
-        add(new TransformComponent());
+        TransformComponent transformComp = (TransformComponent) addAndReturn(new TransformComponent());
+        transformComp.position.set(20f, 20f);
+
         add(new SpriteComponent());
 
         // animation component

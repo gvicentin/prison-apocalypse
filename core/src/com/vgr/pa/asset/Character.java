@@ -43,9 +43,9 @@ public class Character {
      */
 
     // idle
-    public static final float PRISONER_IDLE_DURATION = 0.1f;
-    public static final int PRISONER_IDLE_START = 0;
-    public static final int PRISONER_IDLE_END = 0;
+    public static final float PRISONER_IDLE_DURATION = 0.2f;
+    public static final int PRISONER_IDLE_START = 9;
+    public static final int PRISONER_IDLE_END = 10;
 
     // run
     public static final float PRISONER_RUN_DURATION = 0.1f;
