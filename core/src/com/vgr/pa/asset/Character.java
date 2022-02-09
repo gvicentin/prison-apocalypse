@@ -8,13 +8,11 @@ import java.util.HashMap;
 // TODO: fix the values of the animations, now most of them are placeholders
 public class Character {
 
-    // Common
+    /* ----------------- Common ----------------- */
     public static final int FRAME_WIDTH = 32;
     public static final int FRAME_HEIGHT = 32;
 
-    /**
-     * Policemen
-     */
+    /* --------------- Policemen ---------------- */
 
     // idle
     public static final float POLICEMEN_IDLE_DURATION = 0.1f;
@@ -36,11 +34,7 @@ public class Character {
     public static final int POLICEMEN_DIE_START = 0;
     public static final int POLICEMEN_DIE_END = 0;
 
-    /** End of Policemen */
-
-    /**
-     * Prisoner
-     */
+    /* --------------- Prisoner ----------------- */
 
     // idle
     public static final float PRISONER_IDLE_DURATION = 0.2f;
@@ -62,8 +56,8 @@ public class Character {
     public static final int PRISONER_DIE_START = 0;
     public static final int PRISONER_DIE_END = 0;
 
-    /** End of Prisoner */
 
+    /* -------------- Animations ---------------- */
     public Animation<TextureRegion> idleAnimation;
     public Animation<TextureRegion> runAnimation;
     public Animation<TextureRegion> hitAnimation;

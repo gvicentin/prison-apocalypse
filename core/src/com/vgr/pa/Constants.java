@@ -5,6 +5,11 @@ import com.badlogic.gdx.graphics.Color;
 public class Constants {
 
     /* --------------- Window --------------- */
+    public static final String WINDOW_TITLE = "Prison Apocalypse";
+
+    public static final int WINDOW_WIDTH = 1280;
+    public static final int WINDOW_HEIGHT = 720;
+
     public static final float VIEWPORT_WIDTH = 16.0f;
     public static final float VIEWPORT_HEIGHT = 9.0f;
 
@@ -13,7 +18,7 @@ public class Constants {
     /* ------------- Background ------------- */
     public static final Color BACKGROUND_COLOR = Color.BLACK;
 
-    /* ---------- System Priorities ---------- */
+    /* ---------- System Priorities --------- */
     public static final int PRIORITY_MAP = 0;
     public static final int PRIORITY_PLAYER = 100;
     public static final int PRIORITY_CAMERA = 500;

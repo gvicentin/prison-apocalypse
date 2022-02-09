@@ -1,57 +1,50 @@
 package com.vgr.pa;
 
 import com.badlogic.ashley.core.Engine;
-import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.PooledEngine;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.vgr.pa.asset.Assets;
-import com.vgr.pa.core.*;
+import com.vgr.pa.core.AnimationSystem;
+import com.vgr.pa.core.EntityRenderSystem;
 import com.vgr.pa.map.MapSystem;
-import com.vgr.pa.player.CameraComponent;
-import com.vgr.pa.player.CameraController;
-import com.vgr.pa.player.Player;
-import com.vgr.pa.player.PlayerController;
+import com.vgr.pa.player.CameraSystem;
+import com.vgr.pa.player.PlayerSystem;
+import com.vgr.pa.scene.GameScene;
 
 public class PrisonApocalypse extends ApplicationAdapter {
 
 	private static final String TAG = PrisonApocalypse.class.getSimpleName();
 
-	private OrthographicCamera mainCamera;
 	private Viewport viewport;
-
 	private SpriteBatch batch;
-
 	private Engine engine;
 
 	@Override
 	public void create () {
-		mainCamera = new OrthographicCamera();
-		viewport = new FitViewport(Constants.VIEWPORT_WIDTH, Constants.VIEWPORT_HEIGHT, mainCamera);
-
+		// create batch
 		batch = new SpriteBatch();
 
+		// load assets
 		Assets.instance.finishLoading();
 
+		// create engine and game scene
 		engine = new PooledEngine();
+		GameScene game = new GameScene(engine);
 
-		// entities
-		Entity camera = engine.createEntity();
-		CameraComponent cameraComp = (CameraComponent) camera.addAndReturn(engine.createComponent(CameraComponent.class));
-		cameraComp.camera = mainCamera;
-		engine.addEntity(camera);
-		engine.addEntity(new Player());
+		// setup main camera
+		OrthographicCamera mainCamera = game.getMainCamera();
+		viewport = new FitViewport(Constants.VIEWPORT_WIDTH, Constants.VIEWPORT_HEIGHT, mainCamera);
 
 		// systems
 		engine.addSystem(new MapSystem(mainCamera, Assets.instance.sandboxMap));
-		engine.addSystem(new PlayerController());
-		engine.addSystem(new CameraController());
+		engine.addSystem(new PlayerSystem(game));
+		engine.addSystem(new CameraSystem(game));
 		engine.addSystem(new AnimationSystem());
 		engine.addSystem(new EntityRenderSystem(batch, mainCamera));
 	}

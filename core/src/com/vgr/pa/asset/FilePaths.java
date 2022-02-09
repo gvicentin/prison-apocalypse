@@ -2,26 +2,26 @@ package com.vgr.pa.asset;
 
 public class FilePaths {
 
-    // Characters
+    /* --------------- Characters --------------- */
     public static final String TEXTURE_POLICEMEN = "character/policemen.png";
     public static final String TEXTURE_PRISONER = "character/prisoner.png";
     public static final String TEXTURE_ZOMBIE_POLICEMEN = "character/zombie_policemen.png";
     public static final String TEXTURE_ZOMBIE_PRISONER = "character/zombie_prisoner.png";
 
-    // Maps
+    /* ------------------- Map ------------------ */
     public static final String TEXTURE_PRISON_TILESET = "map/prison_tileset.png";
 
     public static final String MAP_SANDBOX = "map/sandbox-map.tmx";
 
-    // Objects
+    /* ----------------- Objects ---------------- */
     public static final String TEXTURE_BARREL = "object/barrel.png";
     public static final String TEXTURE_LOCKER = "object/locker.png";
     public static final String TEXTURE_PICKUP_ITEMS = "object/pickup_items.png";
     public static final String TEXTURE_WEAPONS = "object/weapon.png";
 
-    // UI
+    /* ------------------- UI ------------------- */
     // TODO: define ui file paths
 
-    // Visual Effects
+    /* ------------------- VFX ------------------ */
     // TODO: define vfx file paths
 }
