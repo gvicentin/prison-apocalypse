@@ -6,12 +6,16 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.vgr.pa.asset.Assets;
 import com.vgr.pa.core.AnimationSystem;
 import com.vgr.pa.core.EntityRenderSystem;
+import com.vgr.pa.core.PhysicsDebugSystem;
+import com.vgr.pa.core.PhysicsSystem;
 import com.vgr.pa.map.MapSystem;
 import com.vgr.pa.player.CameraSystem;
 import com.vgr.pa.player.PlayerSystem;
@@ -24,6 +28,7 @@ public class PrisonApocalypse extends ApplicationAdapter {
 	private Viewport viewport;
 	private SpriteBatch batch;
 	private Engine engine;
+	private World physicsWorld;
 
 	@Override
 	public void create () {
@@ -33,9 +38,12 @@ public class PrisonApocalypse extends ApplicationAdapter {
 		// load assets
 		Assets.instance.finishLoading();
 
+		// physics world
+		physicsWorld = new World(Vector2.Zero, true);
+
 		// create engine and game scene
 		engine = new PooledEngine();
-		GameScene game = new GameScene(engine);
+		GameScene game = new GameScene(engine, physicsWorld, Assets.instance.sandboxMap);
 
 		// setup main camera
 		OrthographicCamera mainCamera = game.getMainCamera();
@@ -47,6 +55,9 @@ public class PrisonApocalypse extends ApplicationAdapter {
 		engine.addSystem(new CameraSystem(game));
 		engine.addSystem(new AnimationSystem());
 		engine.addSystem(new EntityRenderSystem(batch, mainCamera));
+		engine.addSystem(new PhysicsSystem(physicsWorld));
+		if (Settings.instance.debugPhysics)
+			engine.addSystem(new PhysicsDebugSystem(physicsWorld, game));
 	}
 
 	@Override
@@ -65,5 +76,6 @@ public class PrisonApocalypse extends ApplicationAdapter {
 	public void dispose () {
 		batch.dispose();
 		Assets.instance.dispose();
+		physicsWorld.dispose();
 	}
 }
