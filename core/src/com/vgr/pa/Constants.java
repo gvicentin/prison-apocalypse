@@ -26,6 +26,7 @@ public class Constants {
     /* ---------- System Priorities --------- */
     public static final int PRIORITY_MAP = 0;
     public static final int PRIORITY_PLAYER = 100;
+    public static final int PRIORITY_AIM = 101;
     public static final int PRIORITY_CAMERA = 500;
     public static final int PRIORITY_ANIMATION = 1000;
     public static final int PRIORITY_ENTITY_RENDER = 1001;

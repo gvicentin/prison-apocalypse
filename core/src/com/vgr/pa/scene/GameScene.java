@@ -21,23 +21,28 @@ import com.vgr.pa.core.AnimationComponent;
 import com.vgr.pa.core.PhysicsComponent;
 import com.vgr.pa.core.SpriteComponent;
 import com.vgr.pa.core.TransformComponent;
+import com.vgr.pa.player.AimComponent;
 import com.vgr.pa.player.CameraComponent;
 import com.vgr.pa.player.PlayerComponent;
 
 public class GameScene {
 
-    public Entity player;
     public Entity camera;
+    public Entity player;
+    public Entity aim;
 
     public GameScene(Engine engine, World world, TiledMap map) {
         Vector2 playerSpawnPoint = new Vector2();
         createMapEntities(engine, world, map, playerSpawnPoint);
 
+        camera = createCamera(engine);
+        engine.addEntity(camera);
+
         player = createPlayer(engine, world, playerSpawnPoint);
         engine.addEntity(player);
 
-        camera = createCamera(engine);
-        engine.addEntity(camera);
+        aim = createAim(engine);
+        engine.addEntity(aim);
     }
 
     public OrthographicCamera getMainCamera() {
@@ -154,5 +159,22 @@ public class GameScene {
         cameraComp.camera = new OrthographicCamera();
 
         return camera;
+    }
+
+    private Entity createAim(Engine engine) {
+        Entity aim = engine.createEntity();
+
+        AimComponent aimComp = engine.createComponent(AimComponent.class);
+        aimComp.texture = Assets.instance.ui.aimOpen;
+
+        SpriteComponent spriteComp = engine.createComponent(SpriteComponent.class);
+        spriteComp.size.scl(0.5f);
+        spriteComp.origin.scl(0.5f);
+
+        aim.add(engine.createComponent(TransformComponent.class));
+        aim.add(spriteComp);
+        aim.add(aimComp);
+
+        return aim;
     }
 }

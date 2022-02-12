@@ -17,6 +17,7 @@ import com.vgr.pa.core.EntityRenderSystem;
 import com.vgr.pa.core.PhysicsDebugSystem;
 import com.vgr.pa.core.PhysicsSystem;
 import com.vgr.pa.map.MapSystem;
+import com.vgr.pa.player.AimSystem;
 import com.vgr.pa.player.CameraSystem;
 import com.vgr.pa.player.PlayerSystem;
 import com.vgr.pa.scene.GameScene;
@@ -52,6 +53,7 @@ public class PrisonApocalypse extends ApplicationAdapter {
 		// systems
 		engine.addSystem(new MapSystem(mainCamera, Assets.instance.sandboxMap));
 		engine.addSystem(new PlayerSystem(game));
+		engine.addSystem(new AimSystem(game));
 		engine.addSystem(new CameraSystem(game));
 		engine.addSystem(new AnimationSystem());
 		engine.addSystem(new EntityRenderSystem(batch, mainCamera));

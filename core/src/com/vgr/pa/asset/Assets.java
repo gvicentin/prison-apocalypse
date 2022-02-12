@@ -5,6 +5,7 @@ import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
@@ -22,6 +23,8 @@ public class Assets implements Disposable {
     public Character zombiePrisoner;
 
     public TiledMap sandboxMap;
+
+    public UI ui;
 
     private static final String TAG = Assets.class.getSimpleName();
 
@@ -59,6 +62,9 @@ public class Assets implements Disposable {
 
         // map
         manager.load(FilePaths.MAP_SANDBOX, TiledMap.class);
+
+        // ui
+        manager.load(FilePaths.UI_ATLAS, TextureAtlas.class);
     }
 
     private Array<TextureRegion> createCharacterRegions(Texture tex, int frameStart, int frameEnd) {
@@ -142,6 +148,10 @@ public class Assets implements Disposable {
 
         // map
         this.sandboxMap = manager.get(FilePaths.MAP_SANDBOX);
+
+        // ui
+        TextureAtlas uiAtlas = manager.get(FilePaths.UI_ATLAS);
+        this.ui = new UI(uiAtlas);
     }
 
     @Override

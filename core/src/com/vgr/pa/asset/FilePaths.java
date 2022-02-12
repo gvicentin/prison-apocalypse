@@ -20,7 +20,7 @@ public class FilePaths {
     public static final String TEXTURE_WEAPONS = "object/weapon.png";
 
     /* ------------------- UI ------------------- */
-    // TODO: define ui file paths
+    public static final String UI_ATLAS = "ui/ui.atlas";
 
     /* ------------------- VFX ------------------ */
     // TODO: define vfx file paths

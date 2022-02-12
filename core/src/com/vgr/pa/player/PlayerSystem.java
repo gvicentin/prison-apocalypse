@@ -48,11 +48,6 @@ public class PlayerSystem extends EntitySystem {
         if (MathUtils.isZero(physics.body.getLinearVelocity().len2())) {
             animation.transition(PlayerComponent.ANIM_IDLE);
         } else {
-            if (physics.body.getLinearVelocity().x < 0)
-                sprite.flipX = true;
-            else
-                sprite.flipX = false;
-
             animation.transition(PlayerComponent.ANIM_RUN);
         }
         physics.body.setLinearVelocity(velocity);
