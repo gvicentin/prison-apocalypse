@@ -6,6 +6,7 @@ import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapRenderer;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.vgr.pa.Constants;
+import com.vgr.pa.scene.GameWorld;
 
 public class MapSystem extends EntitySystem {
 
@@ -13,11 +14,11 @@ public class MapSystem extends EntitySystem {
     private final TiledMap map;
     private final TiledMapRenderer mapRenderer;
 
-    public MapSystem(OrthographicCamera camera, TiledMap map) {
+    public MapSystem(GameWorld gameWorld) {
         super(Constants.PRIORITY_MAP);
 
-        this.camera = camera;
-        this.map = map;
+        this.camera = gameWorld.getMainCamera();
+        this.map = gameWorld.getMap();
         this.mapRenderer = new OrthogonalTiledMapRenderer(map, 1f / Constants.PIXELS_PER_UNIT);
     }
 

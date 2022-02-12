@@ -9,7 +9,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.vgr.pa.Constants;
 import com.vgr.pa.core.SpriteComponent;
 import com.vgr.pa.core.TransformComponent;
-import com.vgr.pa.scene.GameScene;
+import com.vgr.pa.scene.GameWorld;
 
 public class AimSystem extends EntitySystem {
 
@@ -25,7 +25,7 @@ public class AimSystem extends EntitySystem {
     private OrthographicCamera camera;
     private Vector3 mousePosition;
 
-    public AimSystem(GameScene game) {
+    public AimSystem(GameWorld game) {
         super(Constants.PRIORITY_AIM);
 
         camera = game.getMainCamera();

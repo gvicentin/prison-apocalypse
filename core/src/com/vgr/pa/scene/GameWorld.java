@@ -4,6 +4,8 @@ import com.badlogic.ashley.core.ComponentMapper;
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.maps.Map;
 import com.badlogic.gdx.maps.MapLayer;
 import com.badlogic.gdx.maps.MapObjects;
 import com.badlogic.gdx.maps.MapProperties;
@@ -21,34 +23,72 @@ import com.vgr.pa.core.AnimationComponent;
 import com.vgr.pa.core.PhysicsComponent;
 import com.vgr.pa.core.SpriteComponent;
 import com.vgr.pa.core.TransformComponent;
+import com.vgr.pa.map.MapComponent;
 import com.vgr.pa.player.AimComponent;
 import com.vgr.pa.player.CameraComponent;
 import com.vgr.pa.player.PlayerComponent;
 
-public class GameScene {
+public class GameWorld {
 
+    // entities
     public Entity camera;
+    public Entity map;
     public Entity player;
     public Entity aim;
 
-    public GameScene(Engine engine, World world, TiledMap map) {
+    // game components
+    public Engine entitiesEngine;
+    public World physicsWorld;
+    public SpriteBatch mainBatch;
+
+    // mappers
+    private ComponentMapper<CameraComponent> cameraMapper;
+    private ComponentMapper<MapComponent> mapMapper;
+
+    public GameWorld(Engine engine, World world, SpriteBatch batch, TiledMap tiledMap) {
+        this.entitiesEngine = engine;
+        this.physicsWorld = world;
+        this.mainBatch = batch;
+
+        // mappers
+        cameraMapper = ComponentMapper.getFor(CameraComponent.class);
+        mapMapper = ComponentMapper.getFor(MapComponent.class);
+
         Vector2 playerSpawnPoint = new Vector2();
-        createMapEntities(engine, world, map, playerSpawnPoint);
+        createMapEntities(tiledMap, playerSpawnPoint);
 
-        camera = createCamera(engine);
-        engine.addEntity(camera);
+        // create entities
+        camera = createCamera();
+        map = createMap(tiledMap);
+        player = createPlayer(playerSpawnPoint);
+        aim = createAim();
 
-        player = createPlayer(engine, world, playerSpawnPoint);
-        engine.addEntity(player);
-
-        aim = createAim(engine);
-        engine.addEntity(aim);
+        // add entities to the engine
+        entitiesEngine.addEntity(camera);
+        entitiesEngine.addEntity(map);
+        entitiesEngine.addEntity(player);
+        entitiesEngine.addEntity(aim);
     }
 
     public OrthographicCamera getMainCamera() {
-        return ComponentMapper.getFor(CameraComponent.class).get(camera).camera;
+        return cameraMapper.get(camera).camera;
     }
-    private void createMapEntities(Engine engine, World world, TiledMap map, Vector2 playerSpawnPoint) {
+
+    public TiledMap getMap() {
+        return mapMapper.get(map).map;
+    }
+
+    private Entity createMap(TiledMap tiledMap) {
+        Entity map = entitiesEngine.createEntity();
+
+        MapComponent mapComp = entitiesEngine.createComponent(MapComponent.class);
+        mapComp.map = tiledMap;
+
+        map.add(mapComp);
+        return map;
+    }
+
+    private void createMapEntities(TiledMap map, Vector2 playerSpawnPoint) {
         MapLayer wallLayer = map.getLayers().get("collider");
         MapObjects objects = wallLayer.getObjects();
 
@@ -60,8 +100,8 @@ public class GameScene {
                     rect.width / Constants.PIXELS_PER_UNIT,
                     rect.height / Constants.PIXELS_PER_UNIT
             );
-            Entity wall = createWall(engine, world, worldRect);
-            engine.addEntity(wall);
+            Entity wall = createWall(worldRect);
+            entitiesEngine.addEntity(wall);
         }
 
         MapProperties properties = map.getProperties();
@@ -70,9 +110,9 @@ public class GameScene {
         playerSpawnPoint.set(spawn_x, spawn_y);
     }
 
-    private Entity createWall(Engine engine, World world, Rectangle rect) {
-        Entity wall = engine.createEntity();
-        PhysicsComponent physicsComponent = engine.createComponent(PhysicsComponent.class);
+    private Entity createWall(Rectangle rect) {
+        Entity wall = entitiesEngine.createEntity();
+        PhysicsComponent physicsComponent = entitiesEngine.createComponent(PhysicsComponent.class);
 
         Vector2 boxHalfSize = new Vector2(rect.width / 2f, rect.height / 2f);
         Vector2 boxCenter = new Vector2(rect.x + boxHalfSize.x, rect.y + boxHalfSize.y);
@@ -91,7 +131,7 @@ public class GameScene {
         fixtureDef.shape = boxShape;
 
         // create body
-        physicsComponent.body = world.createBody(playerBodyDef);
+        physicsComponent.body = physicsWorld.createBody(playerBodyDef);
         physicsComponent.body.createFixture(fixtureDef);
 
         boxShape.dispose();
@@ -99,40 +139,32 @@ public class GameScene {
         return wall;
     }
 
-    private Entity createPlayer(Engine engine, World world, Vector2 playerPos) {
-        Entity player = engine.createEntity();
+    private Entity createPlayer(Vector2 playerPos) {
+        Entity player = entitiesEngine.createEntity();
 
         // transform
         TransformComponent transformComp =
-                (TransformComponent) player.addAndReturn(engine.createComponent(TransformComponent.class));
+                (TransformComponent) player.addAndReturn(entitiesEngine.createComponent(TransformComponent.class));
 
         // sprite
-        player.add(engine.createComponent(SpriteComponent.class));
+        player.add(entitiesEngine.createComponent(SpriteComponent.class));
 
         // animation component
         AnimationComponent animationComp =
-                (AnimationComponent) player.addAndReturn(engine.createComponent(AnimationComponent.class));
+                (AnimationComponent) player.addAndReturn(entitiesEngine.createComponent(AnimationComponent.class));
         animationComp.animationMap.put(PlayerComponent.ANIM_IDLE, Assets.instance.prisoner.idleAnimation);
         animationComp.animationMap.put(PlayerComponent.ANIM_RUN, Assets.instance.prisoner.runAnimation);
         animationComp.animationMap.put(PlayerComponent.ANIM_HIT, Assets.instance.prisoner.hitAnimation);
         animationComp.animationMap.put(PlayerComponent.ANIM_DIE, Assets.instance.prisoner.dieAnimation);
 
-        // physics component
-        PhysicsComponent physicsComponent = engine.createComponent(PhysicsComponent.class);
-        setupPhysicsComponent(physicsComponent, world, playerPos);
+        // ---------- Physics Component ----------
+        PhysicsComponent physicsComponent = entitiesEngine.createComponent(PhysicsComponent.class);
         player.add(physicsComponent);
 
-        // player
-        player.add(engine.createComponent(PlayerComponent.class));
-
-        return player;
-    }
-
-    private void setupPhysicsComponent(PhysicsComponent physicsComponent, World world, Vector2 position) {
         // body definition
         BodyDef playerBodyDef = new BodyDef();
         playerBodyDef.type = BodyDef.BodyType.DynamicBody;
-        playerBodyDef.position.set(position);
+        playerBodyDef.position.set(playerPos);
 
         // collider shape
         PolygonShape boxShape = new PolygonShape();
@@ -144,34 +176,39 @@ public class GameScene {
         fixtureDef.shape = boxShape;
 
         // create body
-        physicsComponent.body = world.createBody(playerBodyDef);
+        physicsComponent.body = physicsWorld.createBody(playerBodyDef);
         physicsComponent.body.createFixture(fixtureDef);
 
         boxShape.dispose();
+
+        // player component
+        player.add(entitiesEngine.createComponent(PlayerComponent.class));
+
+        return player;
     }
 
-    private Entity createCamera(Engine engine) {
-        Entity camera = engine.createEntity();
+    private Entity createCamera() {
+        Entity camera = entitiesEngine.createEntity();
 
         // camera
         CameraComponent cameraComp =
-                (CameraComponent) camera.addAndReturn(engine.createComponent(CameraComponent.class));
+                (CameraComponent) camera.addAndReturn(entitiesEngine.createComponent(CameraComponent.class));
         cameraComp.camera = new OrthographicCamera();
 
         return camera;
     }
 
-    private Entity createAim(Engine engine) {
-        Entity aim = engine.createEntity();
+    private Entity createAim() {
+        Entity aim = entitiesEngine.createEntity();
 
-        AimComponent aimComp = engine.createComponent(AimComponent.class);
+        AimComponent aimComp = entitiesEngine.createComponent(AimComponent.class);
         aimComp.texture = Assets.instance.ui.aimOpen;
 
-        SpriteComponent spriteComp = engine.createComponent(SpriteComponent.class);
+        SpriteComponent spriteComp = entitiesEngine.createComponent(SpriteComponent.class);
         spriteComp.size.scl(0.5f);
         spriteComp.origin.scl(0.5f);
 
-        aim.add(engine.createComponent(TransformComponent.class));
+        aim.add(entitiesEngine.createComponent(TransformComponent.class));
         aim.add(spriteComp);
         aim.add(aimComp);
 

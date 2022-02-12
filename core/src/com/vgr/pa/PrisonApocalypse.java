@@ -20,7 +20,7 @@ import com.vgr.pa.map.MapSystem;
 import com.vgr.pa.player.AimSystem;
 import com.vgr.pa.player.CameraSystem;
 import com.vgr.pa.player.PlayerSystem;
-import com.vgr.pa.scene.GameScene;
+import com.vgr.pa.scene.GameWorld;
 
 public class PrisonApocalypse extends ApplicationAdapter {
 
@@ -44,22 +44,22 @@ public class PrisonApocalypse extends ApplicationAdapter {
 
 		// create engine and game scene
 		engine = new PooledEngine();
-		GameScene game = new GameScene(engine, physicsWorld, Assets.instance.sandboxMap);
+		GameWorld game = new GameWorld(engine, physicsWorld, batch, Assets.instance.sandboxMap);
 
 		// setup main camera
 		OrthographicCamera mainCamera = game.getMainCamera();
 		viewport = new FitViewport(Constants.VIEWPORT_WIDTH, Constants.VIEWPORT_HEIGHT, mainCamera);
 
 		// systems
-		engine.addSystem(new MapSystem(mainCamera, Assets.instance.sandboxMap));
+		engine.addSystem(new MapSystem(game));
 		engine.addSystem(new PlayerSystem(game));
 		engine.addSystem(new AimSystem(game));
 		engine.addSystem(new CameraSystem(game));
 		engine.addSystem(new AnimationSystem());
-		engine.addSystem(new EntityRenderSystem(batch, mainCamera));
-		engine.addSystem(new PhysicsSystem(physicsWorld));
+		engine.addSystem(new EntityRenderSystem(game));
+		engine.addSystem(new PhysicsSystem(game));
 		if (Settings.instance.debugPhysics)
-			engine.addSystem(new PhysicsDebugSystem(physicsWorld, game));
+			engine.addSystem(new PhysicsDebugSystem(game));
 	}
 
 	@Override

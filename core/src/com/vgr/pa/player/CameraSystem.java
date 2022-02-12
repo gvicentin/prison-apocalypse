@@ -4,7 +4,7 @@ import com.badlogic.ashley.core.*;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.vgr.pa.Constants;
 import com.vgr.pa.core.TransformComponent;
-import com.vgr.pa.scene.GameScene;
+import com.vgr.pa.scene.GameWorld;
 
 public class CameraSystem extends EntitySystem {
 
@@ -12,7 +12,7 @@ public class CameraSystem extends EntitySystem {
 
     private TransformComponent target;
 
-    public CameraSystem(GameScene gameScene) {
+    public CameraSystem(GameWorld gameScene) {
         super(Constants.PRIORITY_CAMERA);
 
         this.camera = gameScene.getMainCamera();

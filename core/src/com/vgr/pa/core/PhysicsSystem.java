@@ -6,6 +6,7 @@ import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IntervalIteratingSystem;
 import com.badlogic.gdx.physics.box2d.World;
 import com.vgr.pa.Constants;
+import com.vgr.pa.scene.GameWorld;
 
 public class PhysicsSystem extends IntervalIteratingSystem {
 
@@ -14,11 +15,11 @@ public class PhysicsSystem extends IntervalIteratingSystem {
     private ComponentMapper<PhysicsComponent> pm;
     private ComponentMapper<TransformComponent> tm;
 
-    public PhysicsSystem(World world) {
+    public PhysicsSystem(GameWorld gameWorld) {
         super(Family.all(PhysicsComponent.class, TransformComponent.class).get(),
                 Constants.PHYSICS_STEP_DELTA, Constants.PRIORITY_PHYSICS);
 
-        this.world = world;
+        this.world = gameWorld.physicsWorld;
 
         this.pm = ComponentMapper.getFor(PhysicsComponent.class);
         this.tm = ComponentMapper.getFor(TransformComponent.class);

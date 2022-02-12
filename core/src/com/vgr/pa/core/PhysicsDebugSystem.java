@@ -5,7 +5,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.physics.box2d.World;
 import com.vgr.pa.Constants;
-import com.vgr.pa.scene.GameScene;
+import com.vgr.pa.scene.GameWorld;
 
 public class PhysicsDebugSystem extends EntitySystem {
 
@@ -13,10 +13,10 @@ public class PhysicsDebugSystem extends EntitySystem {
     private OrthographicCamera camera;
     private Box2DDebugRenderer debugRenderer;
 
-    public PhysicsDebugSystem(World world, GameScene game) {
+    public PhysicsDebugSystem(GameWorld gameWorld) {
         super(Constants.PRIORITY_PHYSICS_DEBUG);
-        this.world = world;
-        this.camera = game.getMainCamera();
+        this.world = gameWorld.physicsWorld;
+        this.camera = gameWorld.getMainCamera();
         this.debugRenderer = new Box2DDebugRenderer();
     }
 

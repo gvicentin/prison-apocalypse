@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Affine2;
 import com.badlogic.gdx.math.Vector2;
 import com.vgr.pa.Constants;
+import com.vgr.pa.scene.GameWorld;
 
 public class EntityRenderSystem extends SortedIteratingSystem {
 
@@ -26,12 +27,12 @@ public class EntityRenderSystem extends SortedIteratingSystem {
     private Vector2 texScale;
     private Vector2 texCenterTranslation;
 
-    public EntityRenderSystem(SpriteBatch batch, OrthographicCamera camera) {
+    public EntityRenderSystem(GameWorld gameWorld) {
         super(Family.all(SpriteComponent.class, TransformComponent.class).get(),
                 new ZComparator(), Constants.PRIORITY_ENTITY_RENDER);
 
-        this.batch = batch;
-        this.camera = camera;
+        this.batch = gameWorld.mainBatch;
+        this.camera = gameWorld.getMainCamera();
         this.texMapper = ComponentMapper.getFor(SpriteComponent.class);
         this.transMapper = ComponentMapper.getFor(TransformComponent.class);
 

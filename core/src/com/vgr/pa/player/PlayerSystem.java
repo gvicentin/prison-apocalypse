@@ -12,7 +12,7 @@ import com.vgr.pa.core.AnimationComponent;
 import com.vgr.pa.core.PhysicsComponent;
 import com.vgr.pa.core.SpriteComponent;
 import com.vgr.pa.core.TransformComponent;
-import com.vgr.pa.scene.GameScene;
+import com.vgr.pa.scene.GameWorld;
 
 public class PlayerSystem extends EntitySystem {
 
@@ -26,7 +26,7 @@ public class PlayerSystem extends EntitySystem {
     PhysicsComponent physics;
     PlayerComponent player;
 
-    public PlayerSystem(GameScene gameScene) {
+    public PlayerSystem(GameWorld gameScene) {
         super(Constants.PRIORITY_PLAYER);
 
         // input
