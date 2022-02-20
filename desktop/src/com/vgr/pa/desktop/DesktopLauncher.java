@@ -15,7 +15,7 @@ public class DesktopLauncher {
 		config.height = Constants.WINDOW_HEIGHT;
 
 		// settings
-		Settings.instance.debugPhysics = false;
+		Settings.instance.debugPhysics = true;
 		Settings.instance.logLevel = Application.LOG_DEBUG;
 
 		new LwjglApplication(new PrisonApocalypse(), config);

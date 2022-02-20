@@ -12,14 +12,16 @@ import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.vgr.pa.asset.Assets;
+import com.vgr.pa.character.CharacterSystem;
+import com.vgr.pa.character.enemy.EnemySystem;
 import com.vgr.pa.core.AnimationSystem;
 import com.vgr.pa.core.EntityRenderSystem;
 import com.vgr.pa.core.PhysicsDebugSystem;
 import com.vgr.pa.core.PhysicsSystem;
 import com.vgr.pa.map.MapSystem;
-import com.vgr.pa.player.AimSystem;
-import com.vgr.pa.player.CameraSystem;
-import com.vgr.pa.player.PlayerSystem;
+import com.vgr.pa.character.player.AimSystem;
+import com.vgr.pa.character.player.CameraSystem;
+import com.vgr.pa.character.player.PlayerSystem;
 import com.vgr.pa.scene.GameWorld;
 import com.vgr.pa.weapon.BulletPool;
 import com.vgr.pa.weapon.BulletSystem;
@@ -61,11 +63,11 @@ public class PrisonApocalypse extends ApplicationAdapter {
 		engine.addSystem(new MapSystem(game));
 		engine.addSystem(new PlayerSystem(game));
 		engine.addSystem(new AimSystem(game));
-
 		BulletSystem bulletSystem = new BulletSystem(bulletPool);
 		engine.addSystem(bulletSystem);
 		engine.addSystem(new WeaponSystem(game, bulletSystem));
-
+		engine.addSystem(new EnemySystem(game));
+		engine.addSystem(new CharacterSystem());
 		engine.addSystem(new CameraSystem(game));
 		engine.addSystem(new AnimationSystem());
 		engine.addSystem(new EntityRenderSystem(game));

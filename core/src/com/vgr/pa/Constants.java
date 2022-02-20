@@ -28,6 +28,8 @@ public class Constants {
     public static final int PRIORITY_AIM = 100;
     public static final int PRIORITY_PLAYER = 101;
     public static final int PRIORITY_WEAPON = 102;
+    public static final int PRIORITY_ENEMY = 103;
+    public static final int PRIORITY_CHARACTER = 104;
     public static final int PRIORITY_BULLET = 200;
     public static final int PRIORITY_CAMERA = 500;
     public static final int PRIORITY_ANIMATION = 1000;

@@ -1,4 +1,4 @@
-package com.vgr.pa.player;
+package com.vgr.pa.character.player;
 
 import com.badlogic.ashley.core.ComponentMapper;
 import com.badlogic.ashley.core.Entity;

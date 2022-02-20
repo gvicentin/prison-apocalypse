@@ -18,14 +18,16 @@ import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
 import com.vgr.pa.Constants;
 import com.vgr.pa.asset.Assets;
+import com.vgr.pa.character.CharacterComponent;
+import com.vgr.pa.character.CharacterFactory;
 import com.vgr.pa.core.AnimationComponent;
 import com.vgr.pa.core.PhysicsComponent;
 import com.vgr.pa.core.SpriteComponent;
 import com.vgr.pa.core.TransformComponent;
 import com.vgr.pa.map.MapComponent;
-import com.vgr.pa.player.AimComponent;
-import com.vgr.pa.player.CameraComponent;
-import com.vgr.pa.player.PlayerComponent;
+import com.vgr.pa.character.player.AimComponent;
+import com.vgr.pa.character.player.CameraComponent;
+import com.vgr.pa.character.player.PlayerComponent;
 import com.vgr.pa.weapon.WeaponComponent;
 
 public class GameWorld {
@@ -53,6 +55,9 @@ public class GameWorld {
         this.physicsWorld = world;
         this.mainBatch = batch;
 
+        // character factory
+        CharacterFactory charFactory = new CharacterFactory(engine, world);
+
         // mappers
         cameraMapper = ComponentMapper.getFor(CameraComponent.class);
         mapMapper = ComponentMapper.getFor(MapComponent.class);
@@ -63,7 +68,7 @@ public class GameWorld {
         // create entities
         camera = createCamera();
         map = createMap(tiledMap);
-        player = createPlayer(playerSpawnPoint);
+        player = charFactory.createPlayer(playerSpawnPoint);
         aim = createAim();
         pistol = createPistol();
 
@@ -73,6 +78,10 @@ public class GameWorld {
         entitiesEngine.addEntity(player);
         entitiesEngine.addEntity(aim);
         entitiesEngine.addEntity(pistol);
+
+        // add Enemies
+        Entity enemy = charFactory.createPolicemen(new Vector2(15f, 20f));
+        entitiesEngine.addEntity(enemy);
     }
 
     public OrthographicCamera getMainCamera() {
@@ -142,54 +151,6 @@ public class GameWorld {
         boxShape.dispose();
 
         return wall;
-    }
-
-    private Entity createPlayer(Vector2 playerPos) {
-        Entity player = entitiesEngine.createEntity();
-
-        // transform
-        TransformComponent transformComp =
-                (TransformComponent) player.addAndReturn(entitiesEngine.createComponent(TransformComponent.class));
-
-        // sprite
-        player.add(entitiesEngine.createComponent(SpriteComponent.class));
-
-        // animation component
-        AnimationComponent animationComp =
-                (AnimationComponent) player.addAndReturn(entitiesEngine.createComponent(AnimationComponent.class));
-        animationComp.animationMap.put(PlayerComponent.ANIM_IDLE, Assets.instance.prisoner.idleAnimation);
-        animationComp.animationMap.put(PlayerComponent.ANIM_RUN, Assets.instance.prisoner.runAnimation);
-        animationComp.animationMap.put(PlayerComponent.ANIM_HIT, Assets.instance.prisoner.hitAnimation);
-        animationComp.animationMap.put(PlayerComponent.ANIM_DIE, Assets.instance.prisoner.dieAnimation);
-
-        // ---------- Physics Component ----------
-        PhysicsComponent physicsComponent = entitiesEngine.createComponent(PhysicsComponent.class);
-        player.add(physicsComponent);
-
-        // body definition
-        BodyDef playerBodyDef = new BodyDef();
-        playerBodyDef.type = BodyDef.BodyType.DynamicBody;
-        playerBodyDef.position.set(playerPos);
-
-        // collider shape
-        PolygonShape boxShape = new PolygonShape();
-        boxShape.setAsBox(0.15f, 0.10f);
-        physicsComponent.offset.set(0f, 0.10f);
-
-        // define fixture
-        FixtureDef fixtureDef = new FixtureDef();
-        fixtureDef.shape = boxShape;
-
-        // create body
-        physicsComponent.body = physicsWorld.createBody(playerBodyDef);
-        physicsComponent.body.createFixture(fixtureDef);
-
-        boxShape.dispose();
-
-        // player component
-        player.add(entitiesEngine.createComponent(PlayerComponent.class));
-
-        return player;
     }
 
     private Entity createCamera() {
