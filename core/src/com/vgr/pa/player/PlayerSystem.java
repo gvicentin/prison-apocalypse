@@ -16,21 +16,18 @@ import com.vgr.pa.scene.GameWorld;
 
 public class PlayerSystem extends EntitySystem {
 
-    // input
-    private final Vector2 movementInput;
-
     // components
-    TransformComponent transform;
-    SpriteComponent sprite;
-    AnimationComponent animation;
-    PhysicsComponent physics;
-    PlayerComponent player;
+    private TransformComponent transform;
+    private SpriteComponent sprite;
+    private AnimationComponent animation;
+    private PhysicsComponent physics;
+    private PlayerComponent player;
+
+    // aim
+    private TransformComponent aimTransform;
 
     public PlayerSystem(GameWorld gameScene) {
         super(Constants.PRIORITY_PLAYER);
-
-        // input
-        movementInput = new Vector2();
 
         // mappers
         Entity player = gameScene.player;
@@ -39,6 +36,7 @@ public class PlayerSystem extends EntitySystem {
         this.animation = ComponentMapper.getFor(AnimationComponent.class).get(player);
         this.physics = ComponentMapper.getFor(PhysicsComponent.class).get(player);
         this.player = ComponentMapper.getFor(PlayerComponent.class).get(player);
+        this.aimTransform = ComponentMapper.getFor(TransformComponent.class).get(gameScene.aim);
     }
 
     @Override
@@ -51,10 +49,14 @@ public class PlayerSystem extends EntitySystem {
             animation.transition(PlayerComponent.ANIM_RUN);
         }
         physics.body.setLinearVelocity(velocity);
+
+        // flip
+        sprite.flipX = aimTransform.position.x - transform.position.x < 0f;
     }
 
     private Vector2 getMovementInput() {
-        movementInput.set(0f, 0f);
+        Vector2 movementInput = new Vector2();
+
         if (Gdx.input.isKeyPressed(Input.Keys.A)) {
             movementInput.x -= 1.0f;
         }

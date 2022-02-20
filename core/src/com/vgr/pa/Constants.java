@@ -10,8 +10,8 @@ public class Constants {
     public static final int WINDOW_WIDTH = 1280;
     public static final int WINDOW_HEIGHT = 720;
 
-    public static final float VIEWPORT_WIDTH = 16.0f;
-    public static final float VIEWPORT_HEIGHT = 9.0f;
+    public static final float VIEWPORT_WIDTH = 12.0f;
+    public static final float VIEWPORT_HEIGHT = 7.0f;
 
     public static final float PIXELS_PER_UNIT = 32.0f;
 
@@ -23,10 +23,12 @@ public class Constants {
     public static final int VELOCITY_ITERATIONS = 6;
     public static final int POSITION_ITERATIONS = 2;
 
-    /* ---------- System Priorities --------- */
+    /* --------- Systems Priorities --------- */
     public static final int PRIORITY_MAP = 0;
-    public static final int PRIORITY_PLAYER = 100;
-    public static final int PRIORITY_AIM = 101;
+    public static final int PRIORITY_AIM = 100;
+    public static final int PRIORITY_PLAYER = 101;
+    public static final int PRIORITY_WEAPON = 102;
+    public static final int PRIORITY_BULLET = 200;
     public static final int PRIORITY_CAMERA = 500;
     public static final int PRIORITY_ANIMATION = 1000;
     public static final int PRIORITY_ENTITY_RENDER = 1001;

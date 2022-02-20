@@ -17,10 +17,10 @@ public class FilePaths {
     public static final String TEXTURE_BARREL = "object/barrel.png";
     public static final String TEXTURE_LOCKER = "object/locker.png";
     public static final String TEXTURE_PICKUP_ITEMS = "object/pickup_items.png";
-    public static final String TEXTURE_WEAPONS = "object/weapon.png";
+    public static final String ATLAS_WEAPONS = "object/weapon.atlas";
 
     /* ------------------- UI ------------------- */
-    public static final String UI_ATLAS = "ui/ui.atlas";
+    public static final String ATLAS_UI = "ui/ui.atlas";
 
     /* ------------------- VFX ------------------ */
     // TODO: define vfx file paths

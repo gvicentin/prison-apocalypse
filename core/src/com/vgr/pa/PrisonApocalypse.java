@@ -21,6 +21,9 @@ import com.vgr.pa.player.AimSystem;
 import com.vgr.pa.player.CameraSystem;
 import com.vgr.pa.player.PlayerSystem;
 import com.vgr.pa.scene.GameWorld;
+import com.vgr.pa.weapon.BulletPool;
+import com.vgr.pa.weapon.BulletSystem;
+import com.vgr.pa.weapon.WeaponSystem;
 
 public class PrisonApocalypse extends ApplicationAdapter {
 
@@ -33,6 +36,9 @@ public class PrisonApocalypse extends ApplicationAdapter {
 
 	@Override
 	public void create () {
+		// set log level
+		Gdx.app.setLogLevel(Settings.instance.logLevel);
+
 		// create batch
 		batch = new SpriteBatch();
 
@@ -45,6 +51,7 @@ public class PrisonApocalypse extends ApplicationAdapter {
 		// create engine and game scene
 		engine = new PooledEngine();
 		GameWorld game = new GameWorld(engine, physicsWorld, batch, Assets.instance.sandboxMap);
+		BulletPool bulletPool = new BulletPool(game);
 
 		// setup main camera
 		OrthographicCamera mainCamera = game.getMainCamera();
@@ -54,6 +61,11 @@ public class PrisonApocalypse extends ApplicationAdapter {
 		engine.addSystem(new MapSystem(game));
 		engine.addSystem(new PlayerSystem(game));
 		engine.addSystem(new AimSystem(game));
+
+		BulletSystem bulletSystem = new BulletSystem(bulletPool);
+		engine.addSystem(bulletSystem);
+		engine.addSystem(new WeaponSystem(game, bulletSystem));
+
 		engine.addSystem(new CameraSystem(game));
 		engine.addSystem(new AnimationSystem());
 		engine.addSystem(new EntityRenderSystem(game));

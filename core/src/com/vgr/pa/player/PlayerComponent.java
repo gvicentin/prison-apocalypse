@@ -14,5 +14,6 @@ public class PlayerComponent implements Component, Pool.Poolable {
 
     @Override
     public void reset() {
+
     }
 }

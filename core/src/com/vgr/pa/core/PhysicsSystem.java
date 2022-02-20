@@ -4,6 +4,7 @@ import com.badlogic.ashley.core.ComponentMapper;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IntervalIteratingSystem;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.physics.box2d.World;
 import com.vgr.pa.Constants;
 import com.vgr.pa.scene.GameWorld;
@@ -36,6 +37,6 @@ public class PhysicsSystem extends IntervalIteratingSystem {
         PhysicsComponent physics = pm.get(entity);
         TransformComponent transform = tm.get(entity);
         transform.position.set(physics.body.getPosition()).add(physics.offset);
-        transform.rotation = physics.body.getAngle();
+        transform.rotation = physics.body.getAngle() * MathUtils.radiansToDegrees;
     }
 }

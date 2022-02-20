@@ -17,12 +17,16 @@ public class Assets implements Disposable {
 
     public static Assets instance = new Assets();
 
+    // characters
     public Character policemen;
     public Character prisoner;
     public Character zombiePolicemen;
     public Character zombiePrisoner;
 
     public TiledMap sandboxMap;
+
+    // objects
+    public Weapon weapon;
 
     public UI ui;
 
@@ -63,8 +67,11 @@ public class Assets implements Disposable {
         // map
         manager.load(FilePaths.MAP_SANDBOX, TiledMap.class);
 
+        // objects
+        manager.load(FilePaths.ATLAS_WEAPONS, TextureAtlas.class);
+
         // ui
-        manager.load(FilePaths.UI_ATLAS, TextureAtlas.class);
+        manager.load(FilePaths.ATLAS_UI, TextureAtlas.class);
     }
 
     private Array<TextureRegion> createCharacterRegions(Texture tex, int frameStart, int frameEnd) {
@@ -149,8 +156,12 @@ public class Assets implements Disposable {
         // map
         this.sandboxMap = manager.get(FilePaths.MAP_SANDBOX);
 
+        // objects
+        TextureAtlas weaponAtlas = manager.get(FilePaths.ATLAS_WEAPONS);
+        this.weapon = new Weapon(weaponAtlas);
+
         // ui
-        TextureAtlas uiAtlas = manager.get(FilePaths.UI_ATLAS);
+        TextureAtlas uiAtlas = manager.get(FilePaths.ATLAS_UI);
         this.ui = new UI(uiAtlas);
     }
 

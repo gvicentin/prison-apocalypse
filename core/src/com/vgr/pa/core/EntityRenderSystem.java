@@ -54,17 +54,20 @@ public class EntityRenderSystem extends SortedIteratingSystem {
         spriteComp = texMapper.get(entity);
         transComp = transMapper.get(entity);
 
+        if (spriteComp.hide)
+            return;
+
         // transform
         transform.idt();
         transform.translate(transComp.position);
+
+        transform.rotate(transComp.rotation);
 
         // scale considering texture flipping
         texScale.set(transComp.scale);
         texScale.x = spriteComp.flipX ? -texScale.x : texScale.x;
         texScale.y = spriteComp.flipY ? -texScale.y : texScale.y;
         transform.scale(texScale);
-
-        transform.rotate(transComp.rotation);
 
         // place origin in the middle of coordinate system
         texCenterTranslation.set(spriteComp.origin).scl(-1.0f);

@@ -11,6 +11,7 @@ public class SpriteComponent implements Component, Pool.Poolable {
     public TextureRegion region;
     public boolean flipX;
     public boolean flipY;
+    public boolean hide;
 
     // sizing
     public Vector2 size;
@@ -30,6 +31,7 @@ public class SpriteComponent implements Component, Pool.Poolable {
         region = null;
         flipX = false;
         flipY = false;
+        hide = false;
         size.set(1f, 1f);
         origin.set(0.5f, 0.5f);
         zIndex = 0;

@@ -1,5 +1,6 @@
 package com.vgr.pa.desktop;
 
+import com.badlogic.gdx.Application;
 import com.badlogic.gdx.backends.lwjgl.LwjglApplication;
 import com.badlogic.gdx.backends.lwjgl.LwjglApplicationConfiguration;
 import com.vgr.pa.Constants;
@@ -14,7 +15,8 @@ public class DesktopLauncher {
 		config.height = Constants.WINDOW_HEIGHT;
 
 		// settings
-		Settings.instance.debugPhysics = true;
+		Settings.instance.debugPhysics = false;
+		Settings.instance.logLevel = Application.LOG_DEBUG;
 
 		new LwjglApplication(new PrisonApocalypse(), config);
 	}
