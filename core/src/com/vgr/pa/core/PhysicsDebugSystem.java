@@ -5,7 +5,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.physics.box2d.World;
 import com.vgr.pa.Constants;
-import com.vgr.pa.scene.GameWorld;
+import com.vgr.pa.world.GameWorld;
 
 public class PhysicsDebugSystem extends EntitySystem {
 

@@ -147,10 +147,40 @@ public class Assets implements Disposable {
         );
     }
 
+    private void createZombiePolicemen() {
+        // get assets
+        Texture zombiePolicemenTex = manager.get(FilePaths.TEXTURE_ZOMBIE_POLICEMEN);
+
+        this.zombiePolicemen = new Character();
+
+        // create animations
+        this.zombiePolicemen.idleAnimation = new Animation<>(
+                Character.POLICEMEN_IDLE_DURATION,
+                createCharacterRegions(zombiePolicemenTex, Character.POLICEMEN_IDLE_START, Character.POLICEMEN_IDLE_END),
+                Animation.PlayMode.LOOP
+        );
+        this.zombiePolicemen.runAnimation = new Animation<>(
+                Character.POLICEMEN_RUN_DURATION,
+                createCharacterRegions(zombiePolicemenTex, Character.POLICEMEN_RUN_START, Character.POLICEMEN_RUN_END),
+                Animation.PlayMode.LOOP
+        );
+        this.zombiePolicemen.hitAnimation = new Animation<>(
+                Character.POLICEMEN_HIT_DURATION,
+                createCharacterRegions(zombiePolicemenTex, Character.POLICEMEN_HIT_START, Character.POLICEMEN_HIT_END),
+                Animation.PlayMode.LOOP
+        );
+        this.zombiePolicemen.dieAnimation = new Animation<>(
+                Character.POLICEMEN_DIE_DURATION,
+                createCharacterRegions(zombiePolicemenTex, Character.POLICEMEN_DIE_START, Character.POLICEMEN_DIE_END),
+                Animation.PlayMode.LOOP
+        );
+    }
+
     private void setupInstances() {
         // characters
         createPolicemen();
         createPrisoner();
+        createZombiePolicemen();
         // TODO: load all characters
 
         // map

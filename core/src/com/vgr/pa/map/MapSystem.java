@@ -6,7 +6,7 @@ import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapRenderer;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.vgr.pa.Constants;
-import com.vgr.pa.scene.GameWorld;
+import com.vgr.pa.world.GameWorld;
 
 public class MapSystem extends EntitySystem {
 

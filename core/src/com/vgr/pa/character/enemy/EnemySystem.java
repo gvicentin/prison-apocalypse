@@ -8,7 +8,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.vgr.pa.Constants;
 import com.vgr.pa.character.CharacterComponent;
 import com.vgr.pa.core.TransformComponent;
-import com.vgr.pa.scene.GameWorld;
+import com.vgr.pa.world.GameWorld;
 
 public class EnemySystem extends IteratingSystem {
 

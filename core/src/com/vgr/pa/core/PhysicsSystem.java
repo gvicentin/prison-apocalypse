@@ -7,7 +7,7 @@ import com.badlogic.ashley.systems.IntervalIteratingSystem;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.physics.box2d.World;
 import com.vgr.pa.Constants;
-import com.vgr.pa.scene.GameWorld;
+import com.vgr.pa.world.GameWorld;
 
 public class PhysicsSystem extends IntervalIteratingSystem {
 
@@ -36,7 +36,12 @@ public class PhysicsSystem extends IntervalIteratingSystem {
     protected void processEntity(Entity entity) {
         PhysicsComponent physics = pm.get(entity);
         TransformComponent transform = tm.get(entity);
-        transform.position.set(physics.body.getPosition()).add(physics.offset);
+        transform.position.set(physics.body.getPosition()).add(physics.bodyOffset);
         transform.rotation = physics.body.getAngle() * MathUtils.radiansToDegrees;
+
+        // update hit box
+        if (physics.hitBox != null) {
+            physics.hitBox.setTransform(transform.position, 0f);
+        }
     }
 }

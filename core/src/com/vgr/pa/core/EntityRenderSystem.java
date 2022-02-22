@@ -9,7 +9,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Affine2;
 import com.badlogic.gdx.math.Vector2;
 import com.vgr.pa.Constants;
-import com.vgr.pa.scene.GameWorld;
+import com.vgr.pa.world.GameWorld;
 
 public class EntityRenderSystem extends SortedIteratingSystem {
 

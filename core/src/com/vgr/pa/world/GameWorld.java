@@ -1,4 +1,4 @@
-package com.vgr.pa.scene;
+package com.vgr.pa.world;
 
 import com.badlogic.ashley.core.ComponentMapper;
 import com.badlogic.ashley.core.Engine;
@@ -18,16 +18,13 @@ import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
 import com.vgr.pa.Constants;
 import com.vgr.pa.asset.Assets;
-import com.vgr.pa.character.CharacterComponent;
 import com.vgr.pa.character.CharacterFactory;
-import com.vgr.pa.core.AnimationComponent;
 import com.vgr.pa.core.PhysicsComponent;
 import com.vgr.pa.core.SpriteComponent;
 import com.vgr.pa.core.TransformComponent;
 import com.vgr.pa.map.MapComponent;
 import com.vgr.pa.character.player.AimComponent;
 import com.vgr.pa.character.player.CameraComponent;
-import com.vgr.pa.character.player.PlayerComponent;
 import com.vgr.pa.weapon.WeaponComponent;
 
 public class GameWorld {
@@ -80,7 +77,7 @@ public class GameWorld {
         entitiesEngine.addEntity(pistol);
 
         // add Enemies
-        Entity enemy = charFactory.createPolicemen(new Vector2(15f, 20f));
+        Entity enemy = charFactory.createZombiePolicemen(new Vector2(15f, 20f));
         entitiesEngine.addEntity(enemy);
     }
 
@@ -143,6 +140,8 @@ public class GameWorld {
         // define fixture
         FixtureDef fixtureDef = new FixtureDef();
         fixtureDef.shape = boxShape;
+        fixtureDef.filter.categoryBits = Constants.LAYER_ENVIRONMENT;
+        fixtureDef.filter.maskBits = Constants.LAYER_PLAYER | Constants.LAYER_ENEMY | Constants.LAYER_BULLETS;
 
         // create body
         physicsComponent.body = physicsWorld.createBody(playerBodyDef);

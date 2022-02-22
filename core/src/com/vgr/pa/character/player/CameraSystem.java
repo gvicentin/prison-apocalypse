@@ -4,7 +4,7 @@ import com.badlogic.ashley.core.*;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.vgr.pa.Constants;
 import com.vgr.pa.core.TransformComponent;
-import com.vgr.pa.scene.GameWorld;
+import com.vgr.pa.world.GameWorld;
 
 public class CameraSystem extends EntitySystem {
 

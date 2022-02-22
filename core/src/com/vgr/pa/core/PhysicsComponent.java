@@ -8,15 +8,16 @@ import com.badlogic.gdx.utils.Pool;
 public class PhysicsComponent implements Component, Pool.Poolable {
 
     public Body body;
-    public Vector2 offset;
+    public Vector2 bodyOffset;
+
+    public Body hitBox;
+    public Vector2 hitBoxOffset;
 
     public PhysicsComponent() {
-        offset = new Vector2();
+        bodyOffset = new Vector2();
     }
 
     @Override
     public void reset() {
-        body = null;
-        offset.set(Vector2.Zero);
     }
 }

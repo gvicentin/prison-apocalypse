@@ -22,7 +22,8 @@ import com.vgr.pa.map.MapSystem;
 import com.vgr.pa.character.player.AimSystem;
 import com.vgr.pa.character.player.CameraSystem;
 import com.vgr.pa.character.player.PlayerSystem;
-import com.vgr.pa.scene.GameWorld;
+import com.vgr.pa.world.GameWorld;
+import com.vgr.pa.world.WorldContact;
 import com.vgr.pa.weapon.BulletPool;
 import com.vgr.pa.weapon.BulletSystem;
 import com.vgr.pa.weapon.WeaponSystem;
@@ -49,6 +50,8 @@ public class PrisonApocalypse extends ApplicationAdapter {
 
 		// physics world
 		physicsWorld = new World(Vector2.Zero, true);
+		WorldContact worldContact = new WorldContact();
+		physicsWorld.setContactListener(worldContact);
 
 		// create engine and game scene
 		engine = new PooledEngine();

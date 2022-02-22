@@ -23,6 +23,13 @@ public class Constants {
     public static final int VELOCITY_ITERATIONS = 6;
     public static final int POSITION_ITERATIONS = 2;
 
+    public static final short LAYER_ENVIRONMENT = 0x0001;
+    public static final short LAYER_PLAYER = 0x0002;
+    public static final short LAYER_PLAYER_HIT = 0x0004;
+    public static final short LAYER_ENEMY = 0x0008;
+    public static final short LAYER_ENEMY_HIT = 0x0010;
+    public static final short LAYER_BULLETS = 0x0020;
+
     /* --------- Systems Priorities --------- */
     public static final int PRIORITY_MAP = 0;
     public static final int PRIORITY_AIM = 100;

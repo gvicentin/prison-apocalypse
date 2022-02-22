@@ -1,18 +1,17 @@
 package com.vgr.pa.weapon;
 
 import com.badlogic.ashley.core.Entity;
-import com.badlogic.ashley.core.PooledEngine;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.utils.Pool;
+import com.vgr.pa.Constants;
 import com.vgr.pa.asset.Assets;
 import com.vgr.pa.core.PhysicsComponent;
 import com.vgr.pa.core.SpriteComponent;
 import com.vgr.pa.core.TransformComponent;
-import com.vgr.pa.scene.GameWorld;
+import com.vgr.pa.world.GameWorld;
 
 public class BulletPool extends Pool<Entity> {
 
@@ -43,12 +42,12 @@ public class BulletPool extends Pool<Entity> {
         sprite.size.set(0.1f, 0.05f);
         sprite.origin.set(0.05f, 0.025f);
 
-        // ---------- Physics Component ----------
         PhysicsComponent physicsComponent = gameWorld.entitiesEngine.createComponent(PhysicsComponent.class);
 
         // body definition
         BodyDef playerBodyDef = new BodyDef();
         playerBodyDef.type = BodyDef.BodyType.DynamicBody;
+        playerBodyDef.bullet = true;
 
         // collider shape
         PolygonShape boxShape = new PolygonShape();
@@ -58,10 +57,14 @@ public class BulletPool extends Pool<Entity> {
         FixtureDef fixtureDef = new FixtureDef();
         fixtureDef.shape = boxShape;
         fixtureDef.isSensor = true;
+        fixtureDef.filter.categoryBits = Constants.LAYER_BULLETS;
+        fixtureDef.filter.maskBits = Constants.LAYER_ENVIRONMENT |
+                Constants.LAYER_PLAYER_HIT | Constants.LAYER_ENEMY_HIT;
 
         // create body
         physicsComponent.body = gameWorld.physicsWorld.createBody(playerBodyDef);
         physicsComponent.body.createFixture(fixtureDef);
+        physicsComponent.body.setUserData(bullet);
 
         boxShape.dispose();
 
