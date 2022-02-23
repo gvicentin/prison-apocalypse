@@ -16,15 +16,17 @@ public class BulletSystem extends IteratingSystem {
     private BulletPool pool;
 
     // mappers
-    private ComponentMapper<PhysicsComponent> pm;
-    private ComponentMapper<SpriteComponent> sm;
-    private ComponentMapper<BulletComponent> bm;
+    private final ComponentMapper<TransformComponent> tm;
+    private final ComponentMapper<PhysicsComponent> pm;
+    private final ComponentMapper<SpriteComponent> sm;
+    private final ComponentMapper<BulletComponent> bm;
 
     public BulletSystem(BulletPool pool) {
         super(Family.all(BulletComponent.class).get(), Constants.PRIORITY_BULLET);
 
         this.pool = pool;
 
+        tm = ComponentMapper.getFor(TransformComponent.class);
         pm = ComponentMapper.getFor(PhysicsComponent.class);
         sm = ComponentMapper.getFor(SpriteComponent.class);
         bm = ComponentMapper.getFor(BulletComponent.class);
@@ -38,6 +40,10 @@ public class BulletSystem extends IteratingSystem {
 
         SpriteComponent sprite = sm.get(bullet);
         sprite.hide = false;
+
+        TransformComponent transform = tm.get(bullet);
+        transform.position.set(position);
+        transform.rotation = MathUtils.radiansToDegrees * rotation;
 
         PhysicsComponent physics = pm.get(bullet);
         physics.body.setActive(true);
@@ -54,7 +60,7 @@ public class BulletSystem extends IteratingSystem {
             return;
 
         bullet.liveTime += deltaTime;
-        if (bullet.liveTime > bullet.timeToLive) {
+        if (bullet.liveTime > bullet.timeToLive || bullet.destroyed) {
             sprite.hide = true;
             physics.body.setActive(false);
             bullet.reset();

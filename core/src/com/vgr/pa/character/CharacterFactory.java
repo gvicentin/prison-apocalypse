@@ -19,19 +19,20 @@ import com.vgr.pa.core.TransformComponent;
 
 public class CharacterFactory {
 
-    private static final int TYPE_PRISONER = 0;
-    private static final int TYPE_POLICEMEN = 1;
-    private static final int TYPE_ZOMBIE_PRISONER = 2;
-    private static final int TYPE_ZOMBIE_POLICEMEN = 3;
+    private static final int PLAYER = 0;
+    private static final int ENEMY = 2;
+    private static final int PRISONER = 0;
+    private static final int POLICEMEN = 1;
 
-    private Engine engine;
-    private World physicsWorld;
+    private final Engine engine;
+    private final World physicsWorld;
 
-    private Character[] charAssets;
-    private short[] bodyCategoryBits;
-    private short[] bodyMaskBits;
-    private short[] hitCategoryBits;
-    private short[] hitMaskBits;
+    private final Character[] charAssets;
+    private final short[] bodyCategoryBits;
+    private final short[] bodyMaskBits;
+    private final short[] hitCategoryBits;
+    private final short hitMaskBits;
+    private final float[] densities;
 
     public CharacterFactory(Engine engine, World physicsWorld) {
         this.engine = engine;
@@ -47,56 +48,29 @@ public class CharacterFactory {
 
         bodyCategoryBits = new short[] {
                 Constants.LAYER_PLAYER,
-                Constants.LAYER_PLAYER,
-                Constants.LAYER_ENEMY,
                 Constants.LAYER_ENEMY
         };
 
         bodyMaskBits = new short[] {
                 Constants.LAYER_ENVIRONMENT | Constants.LAYER_ENEMY,
-                Constants.LAYER_ENVIRONMENT | Constants.LAYER_ENEMY,
-                Constants.LAYER_ENVIRONMENT | Constants.LAYER_PLAYER,
                 Constants.LAYER_ENVIRONMENT | Constants.LAYER_PLAYER,
         };
 
         hitCategoryBits = new short[] {
                 Constants.LAYER_PLAYER_HIT,
-                Constants.LAYER_PLAYER_HIT,
-                Constants.LAYER_ENEMY_HIT,
                 Constants.LAYER_ENEMY_HIT
         };
 
-        hitMaskBits = new short[] {
-                Constants.LAYER_BULLETS,
-                Constants.LAYER_BULLETS,
-                Constants.LAYER_BULLETS,
-                Constants.LAYER_BULLETS
+        hitMaskBits = Constants.LAYER_BULLETS;
+
+        densities = new float[] {
+                1.0f,
+                2.0f
         };
     }
 
-    public Entity createBaseCharacter(int type, Vector2 startPos) {
-        Entity characterEntity = engine.createEntity();
-
-        SpriteComponent sprite = engine.createComponent(SpriteComponent.class);
-        TransformComponent transform = engine.createComponent(TransformComponent.class);
-        AnimationComponent animation = createAnimationComponent(charAssets[type]);
-        PhysicsComponent physics = createPhysicsComponent(type, startPos);
-
-        // add components
-        characterEntity.add(sprite);
-        characterEntity.add(transform);
-        characterEntity.add(animation);
-        characterEntity.add(physics);
-
-        // update physics user data
-        physics.body.setUserData(characterEntity);
-        physics.hitBox.setUserData(characterEntity);
-
-        return characterEntity;
-    }
-
     public Entity createPlayer(Vector2 startPos) {
-        Entity playerEntity = createBaseCharacter(TYPE_PRISONER, startPos);
+        Entity playerEntity = createBaseCharacter(PLAYER | PRISONER, startPos, new Vector2(1f, 1f));
 
         // character component
         CharacterComponent character = engine.createComponent(CharacterComponent.class);
@@ -114,7 +88,7 @@ public class CharacterFactory {
     }
 
     public Entity createZombiePolicemen(Vector2 startPos) {
-        Entity enemyEntity = createBaseCharacter(TYPE_ZOMBIE_POLICEMEN, startPos);
+        Entity enemyEntity = createBaseCharacter(ENEMY | POLICEMEN, startPos, new Vector2(1f, 1f));
 
         // character component
         CharacterComponent character = engine.createComponent(CharacterComponent.class);
@@ -132,6 +106,28 @@ public class CharacterFactory {
         return enemyEntity;
     }
 
+    private Entity createBaseCharacter(int type, Vector2 startPos, Vector2 scale) {
+        Entity characterEntity = engine.createEntity();
+
+        SpriteComponent sprite = engine.createComponent(SpriteComponent.class);
+        TransformComponent transform = engine.createComponent(TransformComponent.class);
+        transform.scale.scl(scale);
+        AnimationComponent animation = createAnimationComponent(charAssets[type]);
+        PhysicsComponent physics = createPhysicsComponent(type, startPos, scale);
+
+        // add components
+        characterEntity.add(sprite);
+        characterEntity.add(transform);
+        characterEntity.add(animation);
+        characterEntity.add(physics);
+
+        // update physics user data
+        physics.body.setUserData(characterEntity);
+        physics.hitBox.setUserData(characterEntity);
+
+        return characterEntity;
+    }
+
     private AnimationComponent createAnimationComponent(Character charAsset) {
         AnimationComponent animation = engine.createComponent(AnimationComponent.class);
         animation.animationMap.put(CharacterComponent.STATE_IDLE, charAsset.idleAnimation);
@@ -141,27 +137,34 @@ public class CharacterFactory {
         return animation;
     }
 
-    private PhysicsComponent createPhysicsComponent(int type, Vector2 startPos) {
+    private PhysicsComponent createPhysicsComponent(int type, Vector2 startPos, Vector2 scale) {
         PhysicsComponent physics = engine.createComponent(PhysicsComponent.class);
 
         // body box
+        Vector2 halfBoxBody = new Vector2(0.15f, 0.1f);
+        halfBoxBody.scl(scale);
         PolygonShape bodyShape = new PolygonShape();
-        bodyShape.setAsBox(0.15f, 0.10f);
+        bodyShape.setAsBox(halfBoxBody.x, halfBoxBody.y);
 
         // hit box
+        Vector2 halfBoxHit = new Vector2(0.15f, 0.25f);
+        halfBoxHit.scl(scale);
         PolygonShape hitShape = new PolygonShape();
-        hitShape.setAsBox(0.15f, 0.25f);
+        hitShape.setAsBox(halfBoxHit.x, halfBoxHit.y);
 
         // create body
+        int index = type >> 1;
         BodyDef bodyBodyDef = createBodyDef(startPos);
-        FixtureDef bodyFixtureDef = createFixtureDef(bodyShape, bodyCategoryBits[type], bodyMaskBits[type]);
+        FixtureDef bodyFixtureDef = createFixtureDef(bodyShape,
+                densities[index], bodyCategoryBits[index], bodyMaskBits[index]);
         physics.body = physicsWorld.createBody(bodyBodyDef);
         physics.body.createFixture(bodyFixtureDef);
-        physics.bodyOffset.set(0f, 0.1f);
+        physics.bodyOffset.set(0f, 0.1f).scl(scale);
 
         // create hit
         BodyDef hitBodyDef = createBodyDef(startPos);
-        FixtureDef hitFixtureDef = createFixtureDef(hitShape, hitCategoryBits[type], hitMaskBits[type]);
+        FixtureDef hitFixtureDef = createFixtureDef(hitShape,
+                densities[index], hitCategoryBits[index], hitMaskBits);
         physics.hitBox = physicsWorld.createBody(hitBodyDef);
         physics.hitBox.createFixture(hitFixtureDef);
 
@@ -177,13 +180,15 @@ public class CharacterFactory {
         BodyDef bodyDef = new BodyDef();
         bodyDef.type = BodyDef.BodyType.DynamicBody;
         bodyDef.position.set(startPos);
+        bodyDef.fixedRotation = true;
         return bodyDef;
     }
 
-    private FixtureDef createFixtureDef(PolygonShape shape, short categoryBits, short maskBits) {
+    private FixtureDef createFixtureDef(PolygonShape shape, float density, short categoryBits, short maskBits) {
         // define fixture
         FixtureDef fixtureDef = new FixtureDef();
         fixtureDef.shape = shape;
+        fixtureDef.density = density;
         fixtureDef.filter.categoryBits = categoryBits;
         fixtureDef.filter.maskBits = maskBits;
         return fixtureDef;
