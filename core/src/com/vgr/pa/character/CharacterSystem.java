@@ -5,6 +5,7 @@ import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Vector2;
 import com.vgr.pa.Constants;
 import com.vgr.pa.core.AnimationComponent;
 import com.vgr.pa.core.PhysicsComponent;
@@ -32,6 +33,20 @@ public class CharacterSystem extends IteratingSystem {
         AnimationComponent animation = am.get(entity);
         PhysicsComponent physics = pm.get(entity);
         CharacterComponent character = cm.get(entity);
+
+        if (character.isDamage) {
+            animation.transition(CharacterComponent.STATE_HIT);
+            character.isDamage = !animation.isCurrentAnimationFinished();
+            return;
+        }
+
+        if (character.health <= 0f) {
+            animation.transition(CharacterComponent.STATE_DIE);
+            physics.body.setLinearVelocity(Vector2.Zero);
+            physics.body.setActive(false);
+            physics.hitBox.setActive(false);
+            return;
+        }
 
         // update physics
         character.velocity.scl(character.speed);

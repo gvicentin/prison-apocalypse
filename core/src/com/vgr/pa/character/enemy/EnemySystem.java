@@ -4,6 +4,7 @@ import com.badlogic.ashley.core.ComponentMapper;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.math.Vector2;
 import com.vgr.pa.Constants;
 import com.vgr.pa.character.CharacterComponent;
@@ -11,6 +12,8 @@ import com.vgr.pa.core.TransformComponent;
 import com.vgr.pa.world.GameWorld;
 
 public class EnemySystem extends IteratingSystem {
+
+    private static final String TAG = EnemySystem.class.getSimpleName();
 
     private Entity player;
 
@@ -33,12 +36,24 @@ public class EnemySystem extends IteratingSystem {
         TransformComponent playerTransform = tm.get(player);
         TransformComponent enemyTransform = tm.get(enemy);
         CharacterComponent character = cm.get(enemy);
+        CharacterComponent playerCharacter = cm.get(player);
         EnemyComponent enemyComp = em.get(enemy);
 
         Vector2 playerToEnemy = new Vector2(playerTransform.position);
         playerToEnemy.sub(enemyTransform.position);
 
-        if (playerToEnemy.len2() < enemyComp.detectRadius * enemyComp.detectRadius) {
+        float thresholdLimit = .4f;
+        enemyComp.attackTimer += deltaTime;
+        if (playerToEnemy.len2() < thresholdLimit * thresholdLimit) {
+            if (enemyComp.attackTimer > enemyComp.attackCoolDown && playerCharacter.health > 0f) {
+                playerCharacter.isDamage = true;
+                playerCharacter.health -= 25.0f;
+                enemyComp.attackTimer = 0.0f;
+                Gdx.app.log(TAG, "player life: " + playerCharacter.health);
+            }
+            character.velocity.set(Vector2.Zero);
+        }
+        else if (playerToEnemy.len2() < enemyComp.detectRadius * enemyComp.detectRadius) {
             // chase player
             character.velocity.set(playerToEnemy.nor());
         }

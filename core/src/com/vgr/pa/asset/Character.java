@@ -15,9 +15,9 @@ public class Character {
     /* --------------- Policemen ---------------- */
 
     // idle
-    public static final float POLICEMEN_IDLE_DURATION = 0.1f;
-    public static final int POLICEMEN_IDLE_START = 0;
-    public static final int POLICEMEN_IDLE_END = 0;
+    public static final float POLICEMEN_IDLE_DURATION = 0.2f;
+    public static final int POLICEMEN_IDLE_START = 10;
+    public static final int POLICEMEN_IDLE_END = 11;
 
     // run
     public static final float POLICEMEN_RUN_DURATION = 0.1f;
@@ -26,13 +26,13 @@ public class Character {
 
     // hit
     public static final float POLICEMEN_HIT_DURATION = 0.1f;
-    public static final int POLICEMEN_HIT_START = 0;
-    public static final int POLICEMEN_HIT_END = 0;
+    public static final int POLICEMEN_HIT_START = 6;
+    public static final int POLICEMEN_HIT_END = 7;
 
     // die
-    public static final float POLICEMEN_DIE_DURATION = 0.1f;
-    public static final int POLICEMEN_DIE_START = 0;
-    public static final int POLICEMEN_DIE_END = 0;
+    public static final float POLICEMEN_DIE_DURATION = 0.15f;
+    public static final int POLICEMEN_DIE_START = 7;
+    public static final int POLICEMEN_DIE_END = 9;
 
     /* --------------- Prisoner ----------------- */
 
@@ -48,13 +48,13 @@ public class Character {
 
     // hit
     public static final float PRISONER_HIT_DURATION = 0.1f;
-    public static final int PRISONER_HIT_START = 0;
-    public static final int PRISONER_HIT_END = 0;
+    public static final int PRISONER_HIT_START = 5;
+    public static final int PRISONER_HIT_END = 6;
 
     // die
-    public static final float PRISONER_DIE_DURATION = 0.1f;
-    public static final int PRISONER_DIE_START = 0;
-    public static final int PRISONER_DIE_END = 0;
+    public static final float PRISONER_DIE_DURATION = 0.15f;
+    public static final int PRISONER_DIE_START = 6;
+    public static final int PRISONER_DIE_END = 8;
 
 
     /* -------------- Animations ---------------- */

@@ -32,7 +32,6 @@ public class BulletPool extends Pool<Entity> {
 
     @Override
     protected Entity newObject() {
-        Gdx.app.debug(TAG, "Create bullet");
         Entity bullet = gameWorld.entitiesEngine.createEntity();
 
         TransformComponent transform = gameWorld.entitiesEngine.createComponent(TransformComponent.class);

@@ -109,12 +109,12 @@ public class Assets implements Disposable {
         this.policemen.hitAnimation = new Animation<>(
                 Character.POLICEMEN_HIT_DURATION,
                 createCharacterRegions(policemenTex, Character.POLICEMEN_HIT_START, Character.POLICEMEN_HIT_END),
-                Animation.PlayMode.LOOP
+                Animation.PlayMode.NORMAL
         );
         this.policemen.dieAnimation = new Animation<>(
                 Character.POLICEMEN_DIE_DURATION,
                 createCharacterRegions(policemenTex, Character.POLICEMEN_DIE_START, Character.POLICEMEN_DIE_END),
-                Animation.PlayMode.LOOP
+                Animation.PlayMode.NORMAL
         );
     }
 
@@ -138,12 +138,12 @@ public class Assets implements Disposable {
         this.prisoner.hitAnimation = new Animation<>(
                 Character.PRISONER_HIT_DURATION,
                 createCharacterRegions(prisonerTex, Character.PRISONER_HIT_START, Character.PRISONER_HIT_END),
-                Animation.PlayMode.LOOP
+                Animation.PlayMode.NORMAL
         );
         this.prisoner.dieAnimation = new Animation<>(
                 Character.PRISONER_DIE_DURATION,
                 createCharacterRegions(prisonerTex, Character.PRISONER_DIE_START, Character.PRISONER_DIE_END),
-                Animation.PlayMode.LOOP
+                Animation.PlayMode.NORMAL
         );
     }
 
@@ -167,12 +167,12 @@ public class Assets implements Disposable {
         this.zombiePolicemen.hitAnimation = new Animation<>(
                 Character.POLICEMEN_HIT_DURATION,
                 createCharacterRegions(zombiePolicemenTex, Character.POLICEMEN_HIT_START, Character.POLICEMEN_HIT_END),
-                Animation.PlayMode.LOOP
+                Animation.PlayMode.NORMAL
         );
         this.zombiePolicemen.dieAnimation = new Animation<>(
                 Character.POLICEMEN_DIE_DURATION,
                 createCharacterRegions(zombiePolicemenTex, Character.POLICEMEN_DIE_START, Character.POLICEMEN_DIE_END),
-                Animation.PlayMode.LOOP
+                Animation.PlayMode.NORMAL
         );
     }
 

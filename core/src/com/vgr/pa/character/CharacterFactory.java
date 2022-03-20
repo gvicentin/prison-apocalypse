@@ -74,8 +74,7 @@ public class CharacterFactory {
 
         // character component
         CharacterComponent character = engine.createComponent(CharacterComponent.class);
-        character.currentState = CharacterComponent.STATE_IDLE;
-        character.speed = 5.0f;
+        character.speed = 3.0f;
         character.health = 100.0f;
 
         // player component
@@ -92,7 +91,6 @@ public class CharacterFactory {
 
         // character component
         CharacterComponent character = engine.createComponent(CharacterComponent.class);
-        character.currentState = CharacterComponent.STATE_IDLE;
         character.speed = 1.0f;
         character.health = 100.0f;
 

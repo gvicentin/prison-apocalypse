@@ -34,4 +34,8 @@ public class AnimationComponent implements Component, Pool.Poolable {
     public TextureRegion getCurrentFrame() {
         return animationMap.get(currentAnimation).getKeyFrame(timer);
     }
+
+    public boolean isCurrentAnimationFinished() {
+        return animationMap.get(currentAnimation).isAnimationFinished(timer);
+    }
 }

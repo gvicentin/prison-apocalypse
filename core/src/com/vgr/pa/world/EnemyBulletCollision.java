@@ -2,14 +2,11 @@ package com.vgr.pa.world;
 
 import com.badlogic.ashley.core.ComponentMapper;
 import com.badlogic.ashley.core.Entity;
-import com.badlogic.gdx.Gdx;
 import com.vgr.pa.Constants;
 import com.vgr.pa.character.CharacterComponent;
 import com.vgr.pa.weapon.BulletComponent;
 
 public class EnemyBulletCollision extends BaseCollision {
-
-    private static final String TAG = EnemyBulletCollision.class.getSimpleName();
 
     private final ComponentMapper<CharacterComponent> cm;
     private final ComponentMapper<BulletComponent> bm;
@@ -30,8 +27,7 @@ public class EnemyBulletCollision extends BaseCollision {
         BulletComponent bullet = bm.get(bulletEntity);
 
         enemyChar.health -= bullet.damage;
+        enemyChar.isDamage = true;
         bullet.destroyed = true;
-
-        Gdx.app.debug(TAG, "" + enemyChar.health);
     }
 }

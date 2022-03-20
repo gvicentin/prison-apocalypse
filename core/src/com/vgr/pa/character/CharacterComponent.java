@@ -11,8 +11,8 @@ public class CharacterComponent implements Component, Pool.Poolable {
     public static final int STATE_HIT = 2;
     public static final int STATE_DIE = 3;
 
-    public int currentState;
     public boolean facingLeft;
+    public boolean isDamage;
 
     public float health = 100.0f;
 
