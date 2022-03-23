@@ -4,16 +4,19 @@ import com.badlogic.ashley.core.ComponentMapper;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.vgr.pa.Constants;
+import com.vgr.pa.character.CharacterFactory;
 import com.vgr.pa.core.PhysicsComponent;
 import com.vgr.pa.core.SpriteComponent;
 import com.vgr.pa.core.TransformComponent;
 
 public class BulletSystem extends IteratingSystem {
 
-    private BulletPool pool;
+    private BulletPool[] bulletPools;
+    private BulletPool currentPool;
 
     // mappers
     private final ComponentMapper<TransformComponent> tm;
@@ -21,10 +24,13 @@ public class BulletSystem extends IteratingSystem {
     private final ComponentMapper<SpriteComponent> sm;
     private final ComponentMapper<BulletComponent> bm;
 
-    public BulletSystem(BulletPool pool) {
+    public BulletSystem(GunFactory gunFactory) {
         super(Family.all(BulletComponent.class).get(), Constants.PRIORITY_BULLET);
 
-        this.pool = pool;
+        this.bulletPools = new BulletPool[] {
+                new BulletPool(gunFactory.onCreatePistolBullet),
+                new BulletPool(gunFactory.onCreateRifleBullet)
+        };
 
         tm = ComponentMapper.getFor(TransformComponent.class);
         pm = ComponentMapper.getFor(PhysicsComponent.class);
@@ -32,11 +38,14 @@ public class BulletSystem extends IteratingSystem {
         bm = ComponentMapper.getFor(BulletComponent.class);
     }
 
-    public void spawn(Vector2 position, float rotation) {
-        Entity bullet = pool.obtain();
+    public void spawn(int poolIndex, Vector2 position, float rotation) {
+        currentPool = bulletPools[poolIndex];
+        Gdx.app.log("a", "pool index: " + poolIndex);
+        Entity bullet = currentPool.obtain();
 
         BulletComponent bulletComp = bm.get(bullet);
         bulletComp.isActive = true;
+        bulletComp.bulletIndex = poolIndex;
 
         SpriteComponent sprite = sm.get(bullet);
         sprite.hide = false;
@@ -64,7 +73,7 @@ public class BulletSystem extends IteratingSystem {
             sprite.hide = true;
             physics.body.setActive(false);
             bullet.reset();
-            pool.free(entity);
+            bulletPools[bullet.bulletIndex].free(entity);
         }
 
         float angle = physics.body.getAngle();

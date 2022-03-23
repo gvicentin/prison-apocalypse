@@ -22,6 +22,7 @@ import com.vgr.pa.map.MapSystem;
 import com.vgr.pa.character.player.AimSystem;
 import com.vgr.pa.character.player.CameraSystem;
 import com.vgr.pa.character.player.PlayerSystem;
+import com.vgr.pa.weapon.GunFactory;
 import com.vgr.pa.world.GameWorld;
 import com.vgr.pa.world.WorldContact;
 import com.vgr.pa.weapon.BulletPool;
@@ -56,7 +57,6 @@ public class PrisonApocalypse extends ApplicationAdapter {
 		// create engine and game scene
 		engine = new PooledEngine();
 		GameWorld game = new GameWorld(engine, physicsWorld, batch, Assets.instance.sandboxMap);
-		BulletPool bulletPool = new BulletPool(game);
 
 		// setup main camera
 		OrthographicCamera mainCamera = game.getMainCamera();
@@ -66,7 +66,8 @@ public class PrisonApocalypse extends ApplicationAdapter {
 		engine.addSystem(new MapSystem(game));
 		engine.addSystem(new PlayerSystem(game));
 		engine.addSystem(new AimSystem(game));
-		BulletSystem bulletSystem = new BulletSystem(bulletPool);
+		GunFactory gunFactory = new GunFactory(engine, physicsWorld);
+		BulletSystem bulletSystem = new BulletSystem(gunFactory);
 		engine.addSystem(bulletSystem);
 		engine.addSystem(new WeaponSystem(game, bulletSystem));
 		engine.addSystem(new EnemySystem(game));

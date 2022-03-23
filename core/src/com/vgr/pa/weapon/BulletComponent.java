@@ -14,6 +14,8 @@ public class BulletComponent implements Component, Pool.Poolable {
     public boolean destroyed = false;
     public boolean isActive = false;
 
+    public int bulletIndex;
+
     @Override
     public void reset() {
         liveTime = 0f;

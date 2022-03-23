@@ -19,12 +19,12 @@ public class BulletPool extends Pool<Entity> {
 
     private static final int POOL_SIZE = 100;
 
-    private GameWorld gameWorld;
+    private OnBulletCreation onBulletCreation;
 
-    public BulletPool(GameWorld gameWorld) {
+    public BulletPool(OnBulletCreation onBulletCreation) {
         super(POOL_SIZE);
 
-        this.gameWorld = gameWorld;
+        this.onBulletCreation = onBulletCreation;
 
         fill(POOL_SIZE);
         Gdx.app.debug(TAG, "Created Bullets, Pool size: " + POOL_SIZE);
@@ -32,51 +32,7 @@ public class BulletPool extends Pool<Entity> {
 
     @Override
     protected Entity newObject() {
-        Entity bullet = gameWorld.entitiesEngine.createEntity();
-
-        TransformComponent transform = gameWorld.entitiesEngine.createComponent(TransformComponent.class);
-
-        SpriteComponent sprite = gameWorld.entitiesEngine.createComponent(SpriteComponent.class);
-        sprite.region = Assets.instance.weapon.pistolBullet;
-        sprite.size.set(0.1f, 0.05f);
-        sprite.origin.set(0.05f, 0.025f);
-
-        PhysicsComponent physicsComponent = gameWorld.entitiesEngine.createComponent(PhysicsComponent.class);
-
-        // body definition
-        BodyDef playerBodyDef = new BodyDef();
-        playerBodyDef.type = BodyDef.BodyType.DynamicBody;
-        playerBodyDef.bullet = true;
-
-        // collider shape
-        PolygonShape boxShape = new PolygonShape();
-        boxShape.setAsBox(0.05f, 0.025f);
-
-        // define fixture
-        FixtureDef fixtureDef = new FixtureDef();
-        fixtureDef.shape = boxShape;
-        fixtureDef.isSensor = true;
-        fixtureDef.filter.categoryBits = Constants.LAYER_BULLETS;
-        fixtureDef.filter.maskBits = Constants.LAYER_ENVIRONMENT |
-                Constants.LAYER_PLAYER_HIT | Constants.LAYER_ENEMY_HIT;
-
-        // create body
-        physicsComponent.body = gameWorld.physicsWorld.createBody(playerBodyDef);
-        physicsComponent.body.createFixture(fixtureDef);
-        physicsComponent.body.setUserData(bullet);
-
-        boxShape.dispose();
-
-        BulletComponent bulletComp = gameWorld.entitiesEngine.createComponent(BulletComponent.class);
-        bulletComp.isActive = false;
-
-        bullet.add(transform);
-        bullet.add(sprite);
-        bullet.add(physicsComponent);
-        bullet.add(bulletComp);
-        gameWorld.entitiesEngine.addEntity(bullet);
-
-        return bullet;
+        return onBulletCreation.createBullet();
     }
 
     @Override

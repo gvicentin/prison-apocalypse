@@ -25,6 +25,7 @@ import com.vgr.pa.core.TransformComponent;
 import com.vgr.pa.map.MapComponent;
 import com.vgr.pa.character.player.AimComponent;
 import com.vgr.pa.character.player.CameraComponent;
+import com.vgr.pa.weapon.GunFactory;
 import com.vgr.pa.weapon.WeaponComponent;
 
 public class GameWorld {
@@ -36,7 +37,7 @@ public class GameWorld {
     public Entity aim;
 
     // gun
-    public Entity pistol;
+    public Entity[] guns;
 
     // game components
     public Engine entitiesEngine;
@@ -52,7 +53,8 @@ public class GameWorld {
         this.physicsWorld = world;
         this.mainBatch = batch;
 
-        // character factory
+        // factories
+        GunFactory gunFactory = new GunFactory(engine, world);
         CharacterFactory charFactory = new CharacterFactory(engine, world);
 
         // mappers
@@ -67,14 +69,20 @@ public class GameWorld {
         map = createMap(tiledMap);
         player = charFactory.createPlayer(playerSpawnPoint);
         aim = createAim();
-        pistol = createPistol();
+        guns = new Entity[] {
+          gunFactory.createPistol(),
+          gunFactory.createRifle()
+        };
 
         // add entities to the engine
         entitiesEngine.addEntity(camera);
         entitiesEngine.addEntity(map);
         entitiesEngine.addEntity(player);
         entitiesEngine.addEntity(aim);
-        entitiesEngine.addEntity(pistol);
+
+        for (Entity gun : guns) {
+            entitiesEngine.addEntity(gun);
+        }
 
         // add Enemies
         Entity enemy = charFactory.createZombiePolicemen(new Vector2(15f, 20f));
@@ -179,28 +187,4 @@ public class GameWorld {
 
         return aim;
     }
-
-    private Entity createPistol() {
-        Entity pistol = entitiesEngine.createEntity();
-
-        TransformComponent transform = entitiesEngine.createComponent(TransformComponent.class);
-        transform.position.set(4f, 20f);
-        // transform.rotation = 45f;
-
-        SpriteComponent sprite = entitiesEngine.createComponent(SpriteComponent.class);
-        sprite.region = Assets.instance.weapon.pistol;
-        sprite.size.set(0.25f, 0.15f);
-        sprite.origin.set(0.125f, 0.075f);
-
-        WeaponComponent weapon = entitiesEngine.createComponent(WeaponComponent.class);
-        weapon.offset.set(0f, -0.1f);
-        weapon.nuzzle.set(0.2f, 0.02f);
-
-        pistol.add(transform);
-        pistol.add(sprite);
-        pistol.add(weapon);
-
-        return pistol;
-    }
-
 }

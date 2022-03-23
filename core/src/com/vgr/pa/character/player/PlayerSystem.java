@@ -18,9 +18,9 @@ public class PlayerSystem extends EntitySystem {
 
     private ComponentMapper<TransformComponent> tm;
     private ComponentMapper<CharacterComponent> cm;
+    private ComponentMapper<PlayerComponent> pm;
 
-    // aim
-    private TransformComponent aimTransform;
+    private GameWorld gameWorld;
 
     public PlayerSystem(GameWorld gameWorld) {
         super(Constants.PRIORITY_PLAYER);
@@ -32,6 +32,10 @@ public class PlayerSystem extends EntitySystem {
         // mappers
         tm = ComponentMapper.getFor(TransformComponent.class);
         cm = ComponentMapper.getFor(CharacterComponent.class);
+        pm = ComponentMapper.getFor(PlayerComponent.class);
+
+        // TODO: better system to get static instances
+        this.gameWorld = gameWorld;
     }
 
     @Override
@@ -39,6 +43,7 @@ public class PlayerSystem extends EntitySystem {
         TransformComponent aimTransform = tm.get(aim);
         TransformComponent playerTransform = tm.get(player);
         CharacterComponent character = cm.get(player);
+        PlayerComponent playerComp = pm.get(player);
         Vector2 movementInput = new Vector2();
 
         // get input
@@ -53,6 +58,13 @@ public class PlayerSystem extends EntitySystem {
         }
         if (Gdx.input.isKeyPressed(Input.Keys.S)) {
             movementInput.y -= 1.0f;
+        }
+
+        // change gun
+        if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+            int idx = (playerComp.gunSelectionIndex + 1) % gameWorld.guns.length;
+            playerComp.gunSelectionIndex = idx;
+            playerComp.currentGun = gameWorld.guns[idx];
         }
 
         // update char info
