@@ -70,20 +70,33 @@ public class MapFactory {
     }
 
     public void createBarrel(Vector2 position) {
-        Entity barrelEntity = createBaseObject(position, Assets.instance.object.barrel);
+        Entity barrelEntity = createBaseObject(
+                Assets.instance.object.barrel,
+                position,
+                new Vector2(0.5f, 0.75f),
+                new Vector2(0.2f, 0.1f),
+                new Vector2(0.0f, -0.1f)
+        );
 
         // add barrel to engine
         engine.addEntity(barrelEntity);
     }
 
     public void createLocker(Vector2 position) {
-        Entity barrelEntity = createBaseObject(position, Assets.instance.object.locker);
+        Entity barrelEntity = createBaseObject(
+                Assets.instance.object.locker,
+                position,
+                new Vector2(0.6f, 1f),
+                new Vector2(0.2f, 0.15f),
+                new Vector2(-0.05f, -0.25f)
+        );
 
         // add barrel to engine
         engine.addEntity(barrelEntity);
     }
 
-    private Entity createBaseObject(Vector2 position, TextureRegion region) {
+    private Entity createBaseObject(TextureRegion region, Vector2 position, Vector2 size,
+                                    Vector2 colliderSize, Vector2 colliderOffset) {
         Entity objectEntity = engine.createEntity();
 
         TransformComponent transform = engine.createComponent(TransformComponent.class);
@@ -92,17 +105,17 @@ public class MapFactory {
 
         SpriteComponent sprite = engine.createComponent(SpriteComponent.class);
         sprite.region = region;
-        sprite.size.set(0.5f, 1f);
+        sprite.size.set(size);
+        sprite.origin.set(size).scl(0.5f);
         objectEntity.add(sprite);
 
         // physics comp
         PhysicsComponent physics = engine.createComponent(PhysicsComponent.class);
-        Vector2 bodySize = new Vector2(0.25f, 0.12f);
         PolygonShape bodyShape = new PolygonShape();
-        bodyShape.setAsBox(bodySize.x, bodySize.y);
+        bodyShape.setAsBox(colliderSize.x, colliderSize.y);
         BodyDef bodyBodyDef = new BodyDef();
         bodyBodyDef.type = BodyDef.BodyType.StaticBody;
-        bodyBodyDef.position.set(position.x - bodySize.x, position.y);
+        bodyBodyDef.position.set(position.x + colliderOffset.x, position.y + colliderOffset.y);
 
         FixtureDef bodyFixtureDef = new FixtureDef();
         bodyFixtureDef.shape = bodyShape;
