@@ -25,6 +25,8 @@ import com.vgr.pa.core.TransformComponent;
 import com.vgr.pa.map.MapComponent;
 import com.vgr.pa.character.player.AimComponent;
 import com.vgr.pa.character.player.CameraComponent;
+import com.vgr.pa.map.MapFactory;
+import com.vgr.pa.map.MapLoader;
 import com.vgr.pa.weapon.GunFactory;
 import com.vgr.pa.weapon.WeaponComponent;
 
@@ -61,12 +63,15 @@ public class GameWorld {
         cameraMapper = ComponentMapper.getFor(CameraComponent.class);
         mapMapper = ComponentMapper.getFor(MapComponent.class);
 
+        // tiled map
         Vector2 playerSpawnPoint = new Vector2();
-        createMapEntities(tiledMap, playerSpawnPoint);
+        MapFactory mapFactory = new MapFactory(engine, world);
+        MapLoader mapLoader = new MapLoader(mapFactory);
+
 
         // create entities
         camera = createCamera();
-        map = createMap(tiledMap);
+        map = mapLoader.loadTiledMap(tiledMap, playerSpawnPoint);
         player = charFactory.createPlayer(playerSpawnPoint);
         aim = createAim();
         guns = new Entity[] {
@@ -76,7 +81,6 @@ public class GameWorld {
 
         // add entities to the engine
         entitiesEngine.addEntity(camera);
-        entitiesEngine.addEntity(map);
         entitiesEngine.addEntity(player);
         entitiesEngine.addEntity(aim);
 
@@ -105,59 +109,6 @@ public class GameWorld {
 
         map.add(mapComp);
         return map;
-    }
-
-    private void createMapEntities(TiledMap map, Vector2 playerSpawnPoint) {
-        MapLayer wallLayer = map.getLayers().get("collider");
-        MapObjects objects = wallLayer.getObjects();
-
-        for (RectangleMapObject rectObj : objects.getByType(RectangleMapObject.class)) {
-            Rectangle rect = rectObj.getRectangle();
-            Rectangle worldRect = new Rectangle(
-                    rect.x / Constants.PIXELS_PER_UNIT,
-                    rect.y / Constants.PIXELS_PER_UNIT,
-                    rect.width / Constants.PIXELS_PER_UNIT,
-                    rect.height / Constants.PIXELS_PER_UNIT
-            );
-            Entity wall = createWall(worldRect);
-            entitiesEngine.addEntity(wall);
-        }
-
-        MapProperties properties = map.getProperties();
-        int spawn_x = (int) properties.get("player_spawn_x");
-        int spawn_y = (int) properties.get("player_spawn_y");
-        playerSpawnPoint.set(spawn_x, spawn_y);
-    }
-
-    private Entity createWall(Rectangle rect) {
-        Entity wall = entitiesEngine.createEntity();
-        PhysicsComponent physicsComponent = entitiesEngine.createComponent(PhysicsComponent.class);
-
-        Vector2 boxHalfSize = new Vector2(rect.width / 2f, rect.height / 2f);
-        Vector2 boxCenter = new Vector2(rect.x + boxHalfSize.x, rect.y + boxHalfSize.y);
-
-        // body definition
-        BodyDef playerBodyDef = new BodyDef();
-        playerBodyDef.type = BodyDef.BodyType.StaticBody;
-        playerBodyDef.position.set(boxCenter);
-
-        // collider shape
-        PolygonShape boxShape = new PolygonShape();
-        boxShape.setAsBox(boxHalfSize.x, boxHalfSize.y);
-
-        // define fixture
-        FixtureDef fixtureDef = new FixtureDef();
-        fixtureDef.shape = boxShape;
-        fixtureDef.filter.categoryBits = Constants.LAYER_ENVIRONMENT;
-        fixtureDef.filter.maskBits = Constants.LAYER_PLAYER | Constants.LAYER_ENEMY | Constants.LAYER_BULLETS;
-
-        // create body
-        physicsComponent.body = physicsWorld.createBody(playerBodyDef);
-        physicsComponent.body.createFixture(fixtureDef);
-
-        boxShape.dispose();
-
-        return wall;
     }
 
     private Entity createCamera() {

@@ -14,9 +14,7 @@ public class FilePaths {
     public static final String MAP_SANDBOX = "map/sandbox-map.tmx";
 
     /* ----------------- Objects ---------------- */
-    public static final String TEXTURE_BARREL = "object/barrel.png";
-    public static final String TEXTURE_LOCKER = "object/locker.png";
-    public static final String TEXTURE_PICKUP_ITEMS = "object/pickup_items.png";
+    public static final String ATLAS_OBJECTS = "object/object.atlas";
     public static final String ATLAS_WEAPONS = "object/weapon.atlas";
 
     /* ------------------- UI ------------------- */

@@ -61,6 +61,11 @@ public class PlayerSystem extends EntitySystem {
         }
 
         // change gun
+        if (character.health <= 0f) {
+            playerComp.currentGun = null;
+            playerComp.gunSelectionIndex = 0;
+            return;
+        }
         if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
             int idx = (playerComp.gunSelectionIndex + 1) % gameWorld.guns.length;
             playerComp.gunSelectionIndex = idx;

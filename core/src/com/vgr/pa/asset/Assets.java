@@ -27,6 +27,7 @@ public class Assets implements Disposable {
 
     // objects
     public Weapon weapon;
+    public ObjectAssets object;
 
     public UI ui;
 
@@ -69,6 +70,7 @@ public class Assets implements Disposable {
 
         // objects
         manager.load(FilePaths.ATLAS_WEAPONS, TextureAtlas.class);
+        manager.load(FilePaths.ATLAS_OBJECTS, TextureAtlas.class);
 
         // ui
         manager.load(FilePaths.ATLAS_UI, TextureAtlas.class);
@@ -188,7 +190,9 @@ public class Assets implements Disposable {
 
         // objects
         TextureAtlas weaponAtlas = manager.get(FilePaths.ATLAS_WEAPONS);
+        TextureAtlas objectAtlas = manager.get(FilePaths.ATLAS_OBJECTS);
         this.weapon = new Weapon(weaponAtlas);
+        this.object = new ObjectAssets(objectAtlas);
 
         // ui
         TextureAtlas uiAtlas = manager.get(FilePaths.ATLAS_UI);

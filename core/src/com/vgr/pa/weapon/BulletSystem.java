@@ -40,7 +40,6 @@ public class BulletSystem extends IteratingSystem {
 
     public void spawn(int poolIndex, Vector2 position, float rotation) {
         currentPool = bulletPools[poolIndex];
-        Gdx.app.log("a", "pool index: " + poolIndex);
         Entity bullet = currentPool.obtain();
 
         BulletComponent bulletComp = bm.get(bullet);

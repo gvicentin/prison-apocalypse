@@ -13,8 +13,6 @@ import com.vgr.pa.world.GameWorld;
 
 public class WeaponSystem extends EntitySystem {
 
-    private static final String TAG = WeaponSystem.class.getSimpleName();
-
     private Entity player;
     private Entity aim;
 
