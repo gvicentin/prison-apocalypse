@@ -7,11 +7,11 @@ public class Constants {
     /* --------------- Window --------------- */
     public static final String WINDOW_TITLE = "Prison Apocalypse";
 
-    public static final int WINDOW_WIDTH = 1280;
+    public static final int WINDOW_WIDTH = 1024;
     public static final int WINDOW_HEIGHT = 720;
 
-    public static final float VIEWPORT_WIDTH = 12.0f;
-    public static final float VIEWPORT_HEIGHT = 7.0f;
+    public static final float VIEWPORT_WIDTH = 8.5f;
+    public static final float VIEWPORT_HEIGHT = 6.0f;
 
     public static final float PIXELS_PER_UNIT = 32.0f;
 

@@ -109,6 +109,7 @@ public class CharacterFactory {
 
         SpriteComponent sprite = engine.createComponent(SpriteComponent.class);
         TransformComponent transform = engine.createComponent(TransformComponent.class);
+        transform.position.set(startPos);
         transform.scale.scl(scale);
         AnimationComponent animation = createAnimationComponent(charAssets[type]);
         PhysicsComponent physics = createPhysicsComponent(type, startPos, scale);

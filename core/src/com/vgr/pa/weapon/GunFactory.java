@@ -58,6 +58,9 @@ public class GunFactory {
         WeaponComponent weapon = engine.createComponent(WeaponComponent.class);
         weapon.offset.set(0f, -0.1f);
         weapon.nuzzle.set(0.2f, 0.02f);
+        // rumble
+        weapon.duration = 0.08f;
+        weapon.power = 0.05f;
 
         pistol.add(transform);
         pistol.add(sprite);
@@ -79,6 +82,9 @@ public class GunFactory {
         WeaponComponent weapon = engine.createComponent(WeaponComponent.class);
         weapon.offset.set(0f, -0.05f);
         weapon.nuzzle.set(0.3f, 0f);
+        // rumble
+        weapon.duration = 0.1f;
+        weapon.power = 0.065f;
 
         rifle.add(transform);
         rifle.add(sprite);

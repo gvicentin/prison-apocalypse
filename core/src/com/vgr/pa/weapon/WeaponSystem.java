@@ -6,6 +6,7 @@ import com.badlogic.ashley.core.EntitySystem;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.math.Vector2;
 import com.vgr.pa.Constants;
+import com.vgr.pa.character.player.CameraComponent;
 import com.vgr.pa.character.player.PlayerComponent;
 import com.vgr.pa.core.SpriteComponent;
 import com.vgr.pa.core.TransformComponent;
@@ -15,6 +16,7 @@ public class WeaponSystem extends EntitySystem {
 
     private Entity player;
     private Entity aim;
+    private Entity camera;
 
     private BulletSystem bulletSystem;
 
@@ -22,6 +24,7 @@ public class WeaponSystem extends EntitySystem {
     private ComponentMapper<WeaponComponent> wm;
     private ComponentMapper<SpriteComponent> sm;
     private ComponentMapper<PlayerComponent> pm;
+    private ComponentMapper<CameraComponent> cm;
 
     public WeaponSystem(GameWorld gameWorld, BulletSystem bulletSystem) {
         super(Constants.PRIORITY_WEAPON);
@@ -30,10 +33,13 @@ public class WeaponSystem extends EntitySystem {
 
         player = gameWorld.player;
         aim = gameWorld.aim;
+        camera = gameWorld.camera;
+
         tm = ComponentMapper.getFor(TransformComponent.class);
         wm = ComponentMapper.getFor(WeaponComponent.class);
         sm = ComponentMapper.getFor(SpriteComponent.class);
         pm = ComponentMapper.getFor(PlayerComponent.class);
+        cm = ComponentMapper.getFor(CameraComponent.class);
     }
 
     @Override
@@ -48,6 +54,7 @@ public class WeaponSystem extends EntitySystem {
 
         TransformComponent weaponTransform = tm.get(playerComp.currentGun);
         WeaponComponent weaponComp = wm.get(playerComp.currentGun);
+        CameraComponent cameraComp = cm.get(camera);
 
         // calculate aim angle
         Vector2 aimToPlayer = new Vector2(aimTransform.position);
@@ -65,6 +72,7 @@ public class WeaponSystem extends EntitySystem {
             bulletPos.add(playerTransform.position);
             bulletPos.add(weaponComp.offset);
             bulletSystem.spawn(playerComp.gunSelectionIndex, bulletPos, aimToPlayer.angleRad());
+            cameraComp.rumble(weaponComp.duration, weaponComp.power);
         }
 
         // flip weapon sprite
