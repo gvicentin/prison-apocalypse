@@ -66,7 +66,7 @@ public class GameWorld {
         // tiled map
         Vector2 playerSpawnPoint = new Vector2();
         MapFactory mapFactory = new MapFactory(engine, world);
-        MapLoader mapLoader = new MapLoader(mapFactory);
+        MapLoader mapLoader = new MapLoader(mapFactory, charFactory);
 
 
         // create entities
@@ -81,16 +81,11 @@ public class GameWorld {
 
         // add entities to the engine
         entitiesEngine.addEntity(camera);
-        entitiesEngine.addEntity(player);
         entitiesEngine.addEntity(aim);
 
         for (Entity gun : guns) {
             entitiesEngine.addEntity(gun);
         }
-
-        // add Enemies
-        Entity enemy = charFactory.createZombiePolicemen(new Vector2(15f, 20f));
-        entitiesEngine.addEntity(enemy);
     }
 
     public OrthographicCamera getMainCamera() {

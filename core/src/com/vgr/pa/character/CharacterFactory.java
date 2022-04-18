@@ -83,11 +83,12 @@ public class CharacterFactory {
         playerEntity.add(character);
         playerEntity.add(player);
 
+        engine.addEntity(playerEntity);
         return playerEntity;
     }
 
-    public Entity createZombiePolicemen(Vector2 startPos) {
-        Entity enemyEntity = createBaseCharacter(ENEMY | POLICEMEN, startPos, new Vector2(1f, 1f));
+    public Entity createZombiePrisoner(Vector2 startPos, Vector2 size) {
+        Entity enemyEntity = createBaseCharacter(ENEMY | PRISONER, startPos, new Vector2(size.x, size.y));
 
         // character component
         CharacterComponent character = engine.createComponent(CharacterComponent.class);
@@ -101,6 +102,26 @@ public class CharacterFactory {
         enemyEntity.add(character);
         enemyEntity.add(enemy);
 
+        engine.addEntity(enemyEntity);
+        return enemyEntity;
+    }
+
+    public Entity createZombiePolicemen(Vector2 startPos, Vector2 size) {
+        Entity enemyEntity = createBaseCharacter(ENEMY | POLICEMEN, startPos, new Vector2(size.x, size.y));
+
+        // character component
+        CharacterComponent character = engine.createComponent(CharacterComponent.class);
+        character.speed = 1.0f;
+        character.health = 100.0f;
+
+        // enemy component
+        EnemyComponent enemy = engine.createComponent(EnemyComponent.class);
+        enemy.detectRadius = 5f;
+
+        enemyEntity.add(character);
+        enemyEntity.add(enemy);
+
+        engine.addEntity(enemyEntity);
         return enemyEntity;
     }
 

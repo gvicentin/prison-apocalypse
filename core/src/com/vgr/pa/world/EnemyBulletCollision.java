@@ -2,6 +2,7 @@ package com.vgr.pa.world;
 
 import com.badlogic.ashley.core.ComponentMapper;
 import com.badlogic.ashley.core.Entity;
+import com.badlogic.gdx.Gdx;
 import com.vgr.pa.Constants;
 import com.vgr.pa.character.CharacterComponent;
 import com.vgr.pa.weapon.BulletComponent;

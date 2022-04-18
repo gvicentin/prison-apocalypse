@@ -178,12 +178,41 @@ public class Assets implements Disposable {
         );
     }
 
+    private void createZombiePrisoner() {
+        // get assets
+        Texture zombiePrisonerTex = manager.get(FilePaths.TEXTURE_ZOMBIE_PRISONER);
+
+        this.zombiePrisoner= new Character();
+
+        // create animations
+        this.zombiePrisoner.idleAnimation = new Animation<>(
+                Character.PRISONER_IDLE_DURATION,
+                createCharacterRegions(zombiePrisonerTex, Character.PRISONER_IDLE_START, Character.PRISONER_IDLE_END),
+                Animation.PlayMode.LOOP
+        );
+        this.zombiePrisoner.runAnimation = new Animation<>(
+                Character.PRISONER_RUN_DURATION,
+                createCharacterRegions(zombiePrisonerTex, Character.PRISONER_RUN_START, Character.PRISONER_RUN_END),
+                Animation.PlayMode.LOOP
+        );
+        this.zombiePrisoner.hitAnimation = new Animation<>(
+                Character.PRISONER_HIT_DURATION,
+                createCharacterRegions(zombiePrisonerTex, Character.PRISONER_HIT_START, Character.PRISONER_HIT_END),
+                Animation.PlayMode.NORMAL
+        );
+        this.zombiePrisoner.dieAnimation = new Animation<>(
+                Character.PRISONER_DIE_DURATION,
+                createCharacterRegions(zombiePrisonerTex, Character.PRISONER_DIE_START, Character.PRISONER_DIE_END),
+                Animation.PlayMode.NORMAL
+        );
+    }
+
     private void setupInstances() {
         // characters
         createPolicemen();
         createPrisoner();
         createZombiePolicemen();
-        // TODO: load all characters
+        createZombiePrisoner();
 
         // map
         this.sandboxMap = manager.get(FilePaths.MAP_SANDBOX);

@@ -10,6 +10,7 @@ import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.vgr.pa.Constants;
+import com.vgr.pa.character.CharacterFactory;
 
 public class MapLoader {
 
@@ -18,10 +19,15 @@ public class MapLoader {
     private static final int TYPE_BARREL = 0;
     private static final int TYPE_LOCKER = 1;
 
-    private final MapFactory mapFactory;
+    private static final int TYPE_PRISONER = 0;
+    private static final int TYPE_POLICEMEN = 1;
 
-    public MapLoader(MapFactory mapFactory) {
+    private final MapFactory mapFactory;
+    private final CharacterFactory charFactory;
+
+    public MapLoader(MapFactory mapFactory, CharacterFactory charFactory) {
         this.mapFactory = mapFactory;
+        this.charFactory = charFactory;
     }
 
     public Entity loadTiledMap(TiledMap tiledMap, Vector2 playerSpawnPoint) {
@@ -31,6 +37,7 @@ public class MapLoader {
         // create map entities
         createWalls(tiledMap);
         createObjects(tiledMap);
+        createEnemies(tiledMap);
 
         // load player spawn point
         MapProperties properties = tiledMap.getProperties();
@@ -77,6 +84,29 @@ public class MapLoader {
                     break;
                 case TYPE_LOCKER:
                     mapFactory.createLocker(center);
+                    break;
+            }
+        }
+    }
+
+    private void createEnemies(TiledMap tiledMap) {
+        MapLayer enemyLayer = tiledMap.getLayers().get("enemy");
+        MapObjects enemies = enemyLayer.getObjects();
+
+        for (RectangleMapObject rectObj : enemies.getByType(RectangleMapObject.class)) {
+            int type = (Integer) rectObj.getProperties().get("type");
+            float size = (Float) rectObj.getProperties().get("size");
+            Gdx.app.log(TAG, "Creating enemy, type: " + type);
+            Rectangle rect = rectObj.getRectangle();
+            Vector2 position = new Vector2(rect.x, rect.y);
+            position.scl(1f / Constants.PIXELS_PER_UNIT);
+
+            switch (type) {
+                case TYPE_PRISONER:
+                    charFactory.createZombiePrisoner(position, new Vector2(size, size));
+                    break;
+                case TYPE_POLICEMEN:
+                    charFactory.createZombiePolicemen(position, new Vector2(size, size));
                     break;
             }
         }

@@ -60,5 +60,8 @@ public class EnemySystem extends IteratingSystem {
         else {
             character.velocity.set(Vector2.Zero);
         }
+
+        // face movement direction
+        character.facingLeft = character.velocity.x < 0f;
     }
 }
