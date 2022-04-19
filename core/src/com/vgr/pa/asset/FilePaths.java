@@ -11,7 +11,7 @@ public class FilePaths {
     /* ------------------- Map ------------------ */
     public static final String TEXTURE_PRISON_TILESET = "map/prison_tileset.png";
 
-    public static final String MAP_SANDBOX = "map/sandbox-map.tmx";
+    public static final String MAP_SANDBOX = "map/main.tmx";
 
     /* ----------------- Objects ---------------- */
     public static final String ATLAS_OBJECTS = "object/object.atlas";

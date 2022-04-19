@@ -88,7 +88,7 @@ public class MapFactory {
                 position,
                 new Vector2(0.6f, 1f),
                 new Vector2(0.2f, 0.15f),
-                new Vector2(-0.05f, -0.25f)
+                new Vector2(-0.05f, 0.25f)
         );
 
         // add barrel to engine
@@ -101,6 +101,7 @@ public class MapFactory {
 
         TransformComponent transform = engine.createComponent(TransformComponent.class);
         transform.position.set(position);
+        transform.position.add(0f, size.y / 2f);
         objectEntity.add(transform);
 
         SpriteComponent sprite = engine.createComponent(SpriteComponent.class);

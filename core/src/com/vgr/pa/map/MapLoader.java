@@ -72,10 +72,7 @@ public class MapLoader {
             int type = (Integer) rectObj.getProperties().get("type");
             Gdx.app.log(TAG, "Creating map object, type: " + type);
             Rectangle rect = rectObj.getRectangle();
-            Vector2 center = new Vector2(
-                    rect.x + rect.width / 2.0f,
-                    rect.y + rect.height / 2.0f
-            );
+            Vector2 center = new Vector2(rect.x, rect.y);
             center.scl(1f / Constants.PIXELS_PER_UNIT);
 
             switch (type) {

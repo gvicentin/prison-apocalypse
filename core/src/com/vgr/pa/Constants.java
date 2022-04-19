@@ -38,9 +38,9 @@ public class Constants {
     public static final int PRIORITY_ENEMY = 103;
     public static final int PRIORITY_CHARACTER = 104;
     public static final int PRIORITY_BULLET = 200;
-    public static final int PRIORITY_CAMERA = 500;
     public static final int PRIORITY_ANIMATION = 1000;
     public static final int PRIORITY_ENTITY_RENDER = 1001;
     public static final int PRIORITY_PHYSICS_DEBUG = 2000;
     public static final int PRIORITY_PHYSICS = 2001;
+    public static final int PRIORITY_CAMERA = 2002;
 }
