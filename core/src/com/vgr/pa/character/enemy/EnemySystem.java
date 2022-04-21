@@ -39,6 +39,10 @@ public class EnemySystem extends IteratingSystem {
         CharacterComponent playerCharacter = cm.get(player);
         EnemyComponent enemyComp = em.get(enemy);
 
+        if (character.health <= 0f) {
+            return;
+        }
+
         Vector2 playerToEnemy = new Vector2(playerTransform.position);
         playerToEnemy.sub(enemyTransform.position);
 
