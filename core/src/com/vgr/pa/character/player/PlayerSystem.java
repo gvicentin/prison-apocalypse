@@ -3,6 +3,7 @@ package com.vgr.pa.character.player;
 import com.badlogic.ashley.core.ComponentMapper;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.EntitySystem;
+import com.badlogic.ashley.signals.Signal;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.math.Vector2;
@@ -22,6 +23,9 @@ public class PlayerSystem extends EntitySystem {
 
     private GameWorld gameWorld;
 
+    public Signal playerDeadSignal;
+    private boolean isPlayerDead;
+
     public PlayerSystem(GameWorld gameWorld) {
         super(Constants.PRIORITY_PLAYER);
 
@@ -36,6 +40,8 @@ public class PlayerSystem extends EntitySystem {
 
         // TODO: better system to get static instances
         this.gameWorld = gameWorld;
+
+        playerDeadSignal = new Signal();
     }
 
     @Override
@@ -60,10 +66,15 @@ public class PlayerSystem extends EntitySystem {
             movementInput.y -= 1.0f;
         }
 
+        if (isPlayerDead) {
+            playerDeadSignal.dispatch(null);
+        }
+
         // change gun
         if (character.health <= 0f) {
             playerComp.currentGun = null;
             playerComp.gunSelectionIndex = 0;
+            isPlayerDead = true;
             return;
         }
         if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {

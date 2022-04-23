@@ -5,6 +5,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.vgr.pa.asset.Assets;
+import com.vgr.pa.screen.GameOverScreen;
 import com.vgr.pa.screen.GameScreen;
 import com.vgr.pa.screen.MainMenuScreen;
 import com.vgr.pa.screen.SettingsScreen;
@@ -14,6 +15,7 @@ public class PrisonApocalypse extends Game {
 	public static final int SCREEN_MAIN_MENU = 0;
 	public static final int SCREEN_SETTINGS = 1;
 	public static final int SCREEN_GAME = 2;
+	public static final int SCREEN_GAME_OVER = 3;
 
 	public SpriteBatch batch;
 
@@ -34,7 +36,8 @@ public class PrisonApocalypse extends Game {
 		screens = new Screen[] {
 				new MainMenuScreen(this),
 				new SettingsScreen(this),
-				new GameScreen(this)
+				new GameScreen(this),
+				new GameOverScreen(this)
 		};
 
 		// start with menu screen

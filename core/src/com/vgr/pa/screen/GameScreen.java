@@ -2,6 +2,8 @@ package com.vgr.pa.screen;
 
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.PooledEngine;
+import com.badlogic.ashley.signals.Listener;
+import com.badlogic.ashley.signals.Signal;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
@@ -74,6 +76,17 @@ public class GameScreen implements Screen {
         engine.addSystem(new PhysicsSystem(gameWorld));
         if (Settings.instance.debugPhysics)
             engine.addSystem(new PhysicsDebugSystem(gameWorld));
+
+        connectSignals();
+    }
+
+    private void connectSignals() {
+        engine.getSystem(PlayerSystem.class).playerDeadSignal.add(new Listener() {
+            @Override
+            public void receive(Signal signal, Object object) {
+                game.setScreen(PrisonApocalypse.SCREEN_GAME_OVER);
+            }
+        });
     }
 
     @Override
