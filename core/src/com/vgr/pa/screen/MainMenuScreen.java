@@ -3,6 +3,7 @@ package com.vgr.pa.screen;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -10,8 +11,10 @@ import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.ScreenUtils;
+import com.badlogic.gdx.utils.viewport.Viewport;
 import com.vgr.pa.Constants;
 import com.vgr.pa.PrisonApocalypse;
 
@@ -36,7 +39,6 @@ public class MainMenuScreen implements Screen {
         skin = new Skin(Gdx.files.internal("ui/uiskin.json"));
 
         stage = new Stage();
-        Gdx.input.setInputProcessor(stage);
 
         table = new Table();
         table.setFillParent(true);
@@ -64,18 +66,31 @@ public class MainMenuScreen implements Screen {
 
     private void handleButtonsClick() {
         // click play
-        playBtn.addListener(new InputListener() {
-            public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) {
-                game.setScreen(new GameScreen(game));
-                dispose();
-                return false;
+        playBtn.addListener(new ChangeListener() {
+            public void changed(ChangeEvent event, Actor actor) {
+                game.setScreen(PrisonApocalypse.SCREEN_GAME);
+            }
+        });
+
+        settingsBtn.addListener(new ChangeListener() {
+            public void changed(ChangeEvent event, Actor actor) {
+                Gdx.app.debug(TAG, "settings");
+                game.setScreen(PrisonApocalypse.SCREEN_SETTINGS);
+            }
+        });
+
+        // click quit
+        quitBtn.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                game.close();
             }
         });
     }
 
     @Override
     public void show() {
-
+        Gdx.input.setInputProcessor(stage);
     }
 
     @Override
@@ -108,5 +123,6 @@ public class MainMenuScreen implements Screen {
     @Override
     public void dispose() {
         stage.dispose();
+        Gdx.app.debug(TAG, "cleanup");
     }
 }

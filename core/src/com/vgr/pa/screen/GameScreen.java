@@ -3,6 +3,7 @@ package com.vgr.pa.screen;
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.PooledEngine;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -82,6 +83,10 @@ public class GameScreen implements Screen {
 
     @Override
     public void render(float delta) {
+        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+            game.setScreen(PrisonApocalypse.SCREEN_MAIN_MENU);
+        }
+
         ScreenUtils.clear(Constants.BACKGROUND_COLOR);
         engine.update(Gdx.graphics.getDeltaTime());
     }
