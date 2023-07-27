@@ -26,7 +26,7 @@ compile: $(OBJS_DIR) $(OBJECTS)
 	$(CC) $(OBJECTS) -L$(RAYLIB_DIR) $(LDFLAGS) -Wl,-rpath=$(ROOT_DIR)$(RAYLIB_DIR) -o $(BINARY)
 
 $(OBJS_DIR)/%.o: $(SRCS_DIR)/%.c
-	$(CC) $(CFLAGS) -DDEBUG -DASSET_PATH=\"$(ROOT_DIR)assets\" -I$(RAYLIB_DIR) -c $< -o $@ 
+	$(CC) $(CFLAGS) -DDEBUG -DASSETS_PATH=\"$(ROOT_DIR)assets\" -I$(RAYLIB_DIR) -c $< -o $@ 
 
 $(OBJS_DIR):
 	mkdir -p $@
