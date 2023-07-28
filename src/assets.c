@@ -1,4 +1,5 @@
 #include "assets.h"
+#include "raylib.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -39,6 +40,13 @@ int AssetsInit(void) {
     // path where the assets will be loaded
     ChangeDirectory(ASSETS_PATH);
 
+    AssetsLoadSpritesheet("entities");
+    AssetsLoadAnimations("entities");
+
+    TraceLog(LOG_DEBUG, "Textures loaded: %u/%u", textureCount, MAX_TEXTURES);
+    TraceLog(LOG_DEBUG, "Sprites loaded: %u/%u", spriteCount, MAX_SPRITES);
+    TraceLog(LOG_DEBUG, "Animations loaded: %u/%u", animationsCount, MAX_ANIMATIONS);
+
     return 0;
 }
 
@@ -59,7 +67,7 @@ void AssetsLoadSpritesheet(const char *spritesheet) {
     char imageFilepath[256], metaFilepath[256];
 
     snprintf(imageFilepath, 256, "%s.png", spritesheet);
-    snprintf(metaFilepath, 256, "%s.meta", spritesheet);
+    snprintf(metaFilepath, 256, "%s.sprite", spritesheet);
 
     // load from dist to GPU
     textures[textureCount] = LoadTexture(imageFilepath);
@@ -68,30 +76,49 @@ void AssetsLoadSpritesheet(const char *spritesheet) {
     char *line_token = strtok(metaContent, "\n");
     while (line_token != NULL) {
         char sprite[32];
-        int x, y, width, height, index;
+        int x, y, width, height;
 
-        sscanf(line_token, "%31s %d %d %d %d %d", sprite, &x, &y, &width, &height,
-               &index);
-        printf("sprite: %s, x: %d, y: %d, w: %d, h: %d, i: %d\n", sprite, x, y, width,
-               height, index);
-
-        if (index == -1) {
-            // creating sprite
-            sprites[spriteCount] = (Sprite){&textures[textureCount], {x, y, width, height}};
-            addAssetToTable(sprite, spriteCount++);
-        } else {
-            // TODO: create animation
-        }
+        // creating sprite
+        sscanf(line_token, "%31s %d %d %d %d", sprite, &x, &y, &width, &height);
+        sprites[spriteCount] = (Sprite){textures[textureCount], {x, y, width, height}};
+        addAssetToTable(sprite, spriteCount++);
 
         line_token = strtok(NULL, "\n");
     }
-
     ++textureCount;
+}
+
+void AssetsLoadAnimations(const char *anim) {
+    char animFilepath[256];
+
+    snprintf(animFilepath, 256, "%s.anim", anim);
+
+    char *animContent = LoadFileText(animFilepath);
+    char *line_token = strtok(animContent, "\n");
+    while (line_token != NULL) {
+        char animName[32], spriteName[36];
+        int frameCount;
+
+        sscanf(line_token, "%31s %d", animName, &frameCount);
+        animations[animationsCount].frameCount = frameCount;
+        for (int i = 0; i < frameCount; ++i) {
+            sprintf(spriteName, "%s_%d", animName, i);
+            animations[animationsCount].frames[i] = AssetsGetSprite(spriteName);
+        }
+
+        addAssetToTable(animName, animationsCount++);
+        line_token = strtok(NULL, "\n");
+    }
 }
 
 Sprite AssetsGetSprite(const char *sprite) {
     size_t spriteId = getAssetIdFromTable(sprite);
     return sprites[spriteId];
+}
+
+Animation AssetsGetAnimation(const char *anim) {
+    size_t animId = getAssetIdFromTable(anim);
+    return animations[animId];
 }
 
 static void addAssetToTable(const char *assetName, size_t assetId) {
@@ -113,7 +140,6 @@ static void addAssetToTable(const char *assetName, size_t assetId) {
     // adding new entry
     assetTable.keysArray[index] = dupKey;
     assetTable.assetsArray[index] = assetId;
-    printf("Adding assetId %lu on the index %lu\n", assetId, index);
 }
 
 static size_t getAssetIdFromTable(const char *assetName) {

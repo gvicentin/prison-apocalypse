@@ -1,5 +1,6 @@
 .cache/
 build/
-assets/
+
+assets/**.png
 
 compile_commands.json

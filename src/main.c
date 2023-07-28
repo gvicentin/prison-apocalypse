@@ -14,16 +14,13 @@ int main(void) {
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
 
-    SetTargetFPS(60); // Set our game to run at 60 frames-per-second
+    SetTargetFPS(60);
+    SetTraceLogLevel(LOG_DEBUG);
 
     AssetsInit();
-    AssetsLoadSpritesheet("policemen_character");
 
-    Sprite policemanSprite = AssetsGetSprite("policemen_die");
-    printf("%.2f %.2f\n", policemanSprite.source.x, policemanSprite.source.y);
-
-    Sprite policemanSprite2 = AssetsGetSprite("policemen_iddle");
-    printf("%.2f %.2f\n", policemanSprite2.source.x, policemanSprite2.source.y);
+    Animation policemanDie = AssetsGetAnimation("policeman_die");
+    Sprite sprite = policemanDie.frames[0];
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -42,7 +39,7 @@ int main(void) {
 
         DrawText("Congrats! You created your first window!", 190, 200, 20, WHITE);
 
-        DrawTextureRec(*(policemanSprite2.tex), policemanSprite2.source,
+        DrawTextureRec(sprite.tex, sprite.source,
                        (Vector2){100, 50}, WHITE);
 
         EndDrawing();
