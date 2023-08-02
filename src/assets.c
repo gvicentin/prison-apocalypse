@@ -16,25 +16,22 @@
 #define FNV_OFFSET     14695981039346656037UL
 #define FNV_PRIME      1099511628211UL
 
-typedef struct AssetTable_ {
+typedef struct AssetTable {
     char *keysArray[TABLE_CAPACITY];
-    size_t assetsArray[TABLE_CAPACITY];
+    int assetsArray[TABLE_CAPACITY];
 } AssetTable;
 
 static AssetTable assetTable = {0};
-
 static Texture2D textures[MAX_TEXTURES] = {0};
-static size_t textureCount = 0;
-
 static Sprite sprites[MAX_SPRITES] = {0};
-static size_t spriteCount = 0;
-
 static Animation animations[MAX_ANIMATIONS] = {0};
-static size_t animationsCount = 0;
+static int textureCount = 0;
+static int spriteCount = 0;
+static int animationsCount = 0;
 
-static void addAssetToTable(const char *assetName, size_t assetId);
-static size_t getAssetIdFromTable(const char *assetName);
-static size_t hashKey(const char *key);
+static void addAssetToTable(const char *assetName, int assetId);
+static int getAssetIdFromTable(const char *assetName);
+static uint64_t hashKey(const char *key);
 
 int AssetsInit(void) {
     // path where the assets will be loaded
@@ -51,12 +48,12 @@ int AssetsInit(void) {
 }
 
 void AssetsDestroy(void) {
-    for (size_t i = 0; i < textureCount; ++i) {
+    for (int i = 0; i < textureCount; ++i) {
         UnloadTexture(textures[i]);
     }
 
     // deinitialize asset table
-    for (size_t i = 0; i < TABLE_CAPACITY; ++i) {
+    for (int i = 0; i < TABLE_CAPACITY; ++i) {
         if (assetTable.keysArray[i] != NULL) {
             free(assetTable.keysArray[i]);
         }
@@ -86,6 +83,9 @@ void AssetsLoadSpritesheet(const char *spritesheet) {
         line_token = strtok(NULL, "\n");
     }
     ++textureCount;
+
+    // cleanup
+    free(metaContent);
 }
 
 void AssetsLoadAnimations(const char *anim) {
@@ -109,21 +109,24 @@ void AssetsLoadAnimations(const char *anim) {
         addAssetToTable(animName, animationsCount++);
         line_token = strtok(NULL, "\n");
     }
+    
+    // cleanup
+    free(animContent);
 }
 
 Sprite AssetsGetSprite(const char *sprite) {
-    size_t spriteId = getAssetIdFromTable(sprite);
+    int spriteId = getAssetIdFromTable(sprite);
     return sprites[spriteId];
 }
 
 Animation AssetsGetAnimation(const char *anim) {
-    size_t animId = getAssetIdFromTable(anim);
+    int animId = getAssetIdFromTable(anim);
     return animations[animId];
 }
 
-static void addAssetToTable(const char *assetName, size_t assetId) {
+static void addAssetToTable(const char *assetName, int assetId) {
     uint64_t hash = hashKey(assetName);
-    size_t index = hash % TABLE_CAPACITY;
+    int index = hash % TABLE_CAPACITY;
 
     while (assetTable.keysArray[index] != NULL) {
         if (strcmp(assetName, assetTable.keysArray[index]) == 0) {
@@ -142,9 +145,9 @@ static void addAssetToTable(const char *assetName, size_t assetId) {
     assetTable.assetsArray[index] = assetId;
 }
 
-static size_t getAssetIdFromTable(const char *assetName) {
+static int getAssetIdFromTable(const char *assetName) {
     uint64_t hash = hashKey(assetName);
-    size_t index = hash % TABLE_CAPACITY;
+    int index = hash % TABLE_CAPACITY;
 
     while (assetTable.keysArray[index] != NULL) {
         if (strcmp(assetName, assetTable.keysArray[index]) == 0) {
