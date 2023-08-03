@@ -1,3 +1,4 @@
+/* TODO: Assert number of assets loaded */
 #include "assets.h"
 #include "raylib.h"
 
@@ -10,7 +11,7 @@
 #define ASSETS_PATH "./assets"
 #endif
 #define MAX_TEXTURES   8
-#define MAX_SPRITES    32
+#define MAX_SPRITES    256
 #define MAX_ANIMATIONS 16
 #define TABLE_CAPACITY 256
 #define FNV_OFFSET     14695981039346656037UL
@@ -24,7 +25,7 @@ typedef struct AssetTable {
 static AssetTable assetTable = {0};
 static Texture2D textures[MAX_TEXTURES] = {0};
 static Sprite sprites[MAX_SPRITES] = {0};
-static Animation animations[MAX_ANIMATIONS] = {0};
+static AnimationSprite animations[MAX_ANIMATIONS] = {0};
 static int textureCount = 0;
 static int spriteCount = 0;
 static int animationsCount = 0;
@@ -119,7 +120,7 @@ Sprite AssetsGetSprite(const char *sprite) {
     return sprites[spriteId];
 }
 
-Animation AssetsGetAnimation(const char *anim) {
+AnimationSprite AssetsGetAnimation(const char *anim) {
     int animId = getAssetIdFromTable(anim);
     return animations[animId];
 }
