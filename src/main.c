@@ -1,4 +1,4 @@
-/* TODO: Assert number of instances and components */
+#include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
@@ -11,7 +11,13 @@
 #define MAX_COMPONENTS   32
 #define MAX_TRANSFORMS   512
 #define MAX_SPRITERENDER 512
+#define MAX_ANIMATIONS   64
 #define EMPTY_COMPONENT  -1
+
+#define MAX_ANIM_FRAMES 4
+
+#define DEFAULT_SIZE                                                                   \
+    (Vector2) { 64, 64 }
 
 #define GET_ECS_TABLE(compType, entityId)                                              \
     entitiesTable[(compType)*MAX_ENTITIES + (entityId)]
@@ -26,7 +32,7 @@ typedef enum {
     COMP_SPRITERENDER,
     COMP_ANIMATION,
     COMP_COUNT
-} Components;
+} ComponentType;
 
 typedef struct TransformComp {
     int entityId;
@@ -43,6 +49,29 @@ typedef struct SpriteRender {
     bool flipX, flipY;
 } SpriteRender;
 
+typedef struct Animation {
+    int entityId;
+    AnimationSprite animSprite;
+    int currentFrame;
+    float frameDuration, frameTime;
+} Animation;
+
+//--------------------------------------------------------------------------------------
+// Prototypes
+//--------------------------------------------------------------------------------------
+static int createEntity(void);
+static int createComponent(ComponentType compType, int entity);
+static void initTransform(int transf, int entity);
+static void initSpriteRender(int sRender, int entity);
+static void initAnimation(int anim, int entity);
+
+static int createCharacter(const char *spriteName, float x, float y);
+static int createPlayer(float x, float y);
+static int createTrigger(float x, float y);
+
+static void processSpriteRenderSystem(void);
+static void processAnimation(float dt);
+
 //--------------------------------------------------------------------------------------
 // Globals
 //--------------------------------------------------------------------------------------
@@ -50,28 +79,25 @@ static int entitiesTable[MAX_ENTITIES * MAX_COMPONENTS];
 static int entitiesCount;
 static int player;
 
-static TransformComp compTransform[MAX_ENTITIES];
-static int compTransformCount;
-static SpriteRender compSpriteRender[MAX_ENTITIES];
-static int compSpriteRenderCount;
+static TransformComp compTransform[MAX_TRANSFORMS];
+static SpriteRender compSpriteRender[MAX_SPRITERENDER];
+static Animation compAnimation[MAX_ANIMATIONS];
+
+static int compCounts[MAX_COMPONENTS];
+static int maxComponents[] = {MAX_TRANSFORMS, MAX_SPRITERENDER, MAX_ANIMATIONS};
+static void (*componentInits[]) (int, int) = {initTransform, initSpriteRender, initAnimation};
+
 
 //--------------------------------------------------------------------------------------
-// Prototypes
-//--------------------------------------------------------------------------------------
-static int createPlayer(const char *spriteName, float x, float y);
-static int createTrigger(float x, float y);
-static void processSpriteRenderSystem(float dt);
-
-//------------------------------------------------------------------------------------
 // Program main entry point
-//------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------
 int main(void) {
     // Initialization
-    //--------------------------------------------------------------------------------------
+    //----------------------------------------------------------------------------------
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
+    InitWindow(screenWidth, screenHeight, "Prison Apocalypse");
 
     SetTargetFPS(60);
     SetTraceLogLevel(LOG_DEBUG);
@@ -84,10 +110,6 @@ int main(void) {
         entitiesTable[i] = EMPTY_COMPONENT;
     }
     entitiesCount = 0;
-    compTransformCount = 0;
-    compSpriteRenderCount = 0;
-    memset(compTransform, 0, sizeof(compTransform));
-    memset(compSpriteRender, 0, sizeof(compSpriteRender));
 
     // create entities
     for (int i = 0; i < 20; ++i) {
@@ -95,32 +117,27 @@ int main(void) {
         createTrigger(i * 20, i * 20);
     }
 
-    const char *spriteNames[] = {
-        "policeman_idle_0",
-        "policeman_die_0",
-        "policeman_hit_0",
-        "policeman_zombie_run_2",
-        "prisoner_idle_0",
-        "prisoner_zombie_run_0"
-    };
-    player = createPlayer("prisoner_zombie_run_0", 50, 50);
+    const char *spriteNames[] = {"policeman_idle_0", "policeman_die_0",
+                                 "policeman_hit_0",  "policeman_zombie_run_2",
+                                 "prisoner_idle_0",  "prisoner_zombie_run_0"};
+    player = createPlayer(50, 50);
     for (int i = 0; i < 10; i++) {
         for (int j = 0; j < 10; j++) {
-            createPlayer(spriteNames[GetRandomValue(0, 5)], i * 90, j * 90);
+            createCharacter(spriteNames[GetRandomValue(0, 5)], i * 90, j * 90);
         }
     }
 
-    for (int i = 1; i < compSpriteRenderCount; ++i) {
+    for (int i = 1; i < compCounts[COMP_SPRITERENDER]; ++i) {
         compSpriteRender[i].flipX = GetRandomValue(0, 1);
         compSpriteRender[i].flipY = GetRandomValue(0, 1);
     }
-    //--------------------------------------------------------------------------------------
+    //----------------------------------------------------------------------------------
 
     // Main game loop
     while (!WindowShouldClose()) // Detect window close button or ESC key
     {
         // Update
-        //----------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
         float dt = GetFrameTime();
         Vector2 input = Vector2Zero();
 
@@ -138,79 +155,117 @@ int main(void) {
         }
 
         if (IsKeyPressed(KEY_Z)) {
-            bool inverted = !compSpriteRender[GET_ECS_TABLE(COMP_SPRITERENDER, player)].flipX;
+            bool inverted =
+                !compSpriteRender[GET_ECS_TABLE(COMP_SPRITERENDER, player)].flipX;
             compSpriteRender[GET_ECS_TABLE(COMP_SPRITERENDER, player)].flipX = inverted;
         }
         if (IsKeyPressed(KEY_X)) {
-            bool inverted = !compSpriteRender[GET_ECS_TABLE(COMP_SPRITERENDER, player)].flipY;
+            bool inverted =
+                !compSpriteRender[GET_ECS_TABLE(COMP_SPRITERENDER, player)].flipY;
             compSpriteRender[GET_ECS_TABLE(COMP_SPRITERENDER, player)].flipY = inverted;
         }
 
         Vector2 velocity = Vector2Scale(Vector2Normalize(input), dt * 100);
         compTransform[GET_ECS_TABLE(COMP_TRANSFORM, player)].position =
             Vector2Add(compTransform[player].position, velocity);
-        //----------------------------------------------------------------------------------
+
+        processAnimation(dt);
+        //------------------------------------------------------------------------------
 
         // Draw
-        //----------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
         BeginDrawing();
         ClearBackground(LIGHTGRAY);
-        processSpriteRenderSystem(dt);
+        processSpriteRenderSystem();
         EndDrawing();
-        //----------------------------------------------------------------------------------
+        //------------------------------------------------------------------------------
     }
 
     // De-Initialization
-    //--------------------------------------------------------------------------------------
+    //----------------------------------------------------------------------------------
     AssetsDestroy();
     CloseWindow(); // Close window and OpenGL context
-    //--------------------------------------------------------------------------------------
+    //----------------------------------------------------------------------------------
 
     return 0;
 }
 
-static int createPlayer(const char *spriteName, float x, float y) {
-    int player = entitiesCount++;
-    int transf = compTransformCount++;
-    int sRender = compSpriteRenderCount++;
-    Vector2 size = {64, 64};
+static int createEntity(void) {
+    assert(entitiesCount + 1 < MAX_ENTITIES);
+    return entitiesCount++;
+}
 
-    compTransform[transf] = (TransformComp){.entityId = player,
-                                            .position = (Vector2){x, y},
-                                            .scale = Vector2One(),
-                                            .rotation = 0};
-    compSpriteRender[sRender] =
-        (SpriteRender){.entityId = player,
-                       .sprite = AssetsGetSprite(spriteName),
-                       .size = size,
-                       .pivot = Vector2Scale(size, 0.5f),
-                       .tint = WHITE,
-                       .flipX = false,
-                       .flipY = false};
+static int createComponent(ComponentType compType, int entity) {
+    assert(compCounts[compType] + 1 < maxComponents[compType]);
+    int comp = compCounts[compType]++;
 
-    // update entities table
-    SET_ECS_TABLE(COMP_TRANSFORM, player, transf);
-    SET_ECS_TABLE(COMP_SPRITERENDER, player, sRender);
+    SET_ECS_TABLE(compType, entity, comp);
+    componentInits[compType](comp, entity);
+
+    return comp;
+}
+
+static void initTransform(int transf, int entity) {
+    compTransform[transf].entityId = entity;
+    compTransform[transf].position = Vector2Zero();
+    compTransform[transf].scale = Vector2One();
+    compTransform[transf].rotation = 0;
+}
+
+static void initSpriteRender(int sRender, int entity) {
+    compSpriteRender[sRender].entityId = entity;
+    compSpriteRender[sRender].sprite = (Sprite){0};
+    compSpriteRender[sRender].size = DEFAULT_SIZE;
+    compSpriteRender[sRender].pivot = Vector2Scale(DEFAULT_SIZE, 0.5f);
+    compSpriteRender[sRender].tint = WHITE;
+    compSpriteRender[sRender].flipX = false;
+    compSpriteRender[sRender].flipY = false;
+}
+
+static void initAnimation(int anim, int entity) {
+    compAnimation[anim].entityId = entity;
+    compAnimation[anim].animSprite = (AnimationSprite){0};
+    compAnimation[anim].currentFrame = 0;
+    compAnimation[anim].frameTime = 0;
+    compAnimation[anim].frameDuration = 0.2f;
+}
+
+static int createCharacter(const char *spriteName, float x, float y) {
+    int character = createEntity();
+    int transf = createComponent(COMP_TRANSFORM, character);
+    int sRender = createComponent(COMP_SPRITERENDER, character);
+
+    compTransform[transf].position = (Vector2){x, y};
+    compSpriteRender[sRender].sprite = AssetsGetSprite(spriteName);
+
+    return character;
+}
+
+static int createPlayer(float x, float y) {
+    int player = createEntity();
+    int transf = createComponent(COMP_TRANSFORM, player);
+    int sRender = createComponent(COMP_SPRITERENDER, player);
+    int anim = createComponent(COMP_ANIMATION, player);
+
+    compTransform[transf].position = (Vector2){x, y};
+    compSpriteRender[sRender].sprite = AssetsGetSprite("policeman_idle_0");
+    compAnimation[anim].animSprite = AssetsGetAnimation("policeman_run");
+    compAnimation[anim].frameDuration = 0.1;
 
     return player;
 }
 
 static int createTrigger(float x, float y) {
-    int trigger = entitiesCount++;
-    int transf = compTransformCount++;
+    int trigger = createEntity();
+    int transf = createComponent(COMP_TRANSFORM, player);
 
-    compTransform[transf] = (TransformComp){.entityId = trigger,
-                                            .position = (Vector2){x, y},
-                                            .scale = Vector2One(),
-                                            .rotation = 0};
-
-    SET_ECS_TABLE(COMP_TRANSFORM, trigger, transf);
+    compTransform[transf].position = (Vector2){x, y};
 
     return trigger;
 }
 
-static void processSpriteRenderSystem(float dt) {
-    for (int i = 0; i < compSpriteRenderCount; ++i) {
+static void processSpriteRenderSystem(void) {
+    for (int i = 0; i < compCounts[COMP_SPRITERENDER]; ++i) {
         SpriteRender sRender = compSpriteRender[i];
         TransformComp transf =
             compTransform[GET_ECS_TABLE(COMP_TRANSFORM, sRender.entityId)];
@@ -220,9 +275,22 @@ static void processSpriteRenderSystem(float dt) {
         srcRect.width *= mult.x;
         srcRect.height *= mult.y;
         Rectangle destRect = {transf.position.x, transf.position.y,
-                          transf.scale.x * sRender.size.x,
-                          transf.scale.y * sRender.size.y};
+                              transf.scale.x * sRender.size.x,
+                              transf.scale.y * sRender.size.y};
         DrawTexturePro(sRender.sprite.tex, srcRect, destRect, Vector2Zero(),
                        transf.rotation, sRender.tint);
+    }
+}
+
+static void processAnimation(float dt) {
+    for (int i = 0; i < compCounts[COMP_ANIMATION]; ++i) {
+        Animation *anim = &compAnimation[i];
+        SpriteRender *sRender =
+            &compSpriteRender[GET_ECS_TABLE(COMP_ANIMATION, anim->entityId)];
+
+        anim->frameTime += dt;
+        anim->currentFrame = ((int)(anim->frameTime / anim->frameDuration)) %
+                             anim->animSprite.frameCount;
+        sRender->sprite = anim->animSprite.frames[anim->currentFrame];
     }
 }

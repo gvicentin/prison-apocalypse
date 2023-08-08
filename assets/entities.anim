@@ -2,3 +2,7 @@ policeman_idle 2
 policeman_run 4
 policeman_hit 2
 policeman_die 2
+prisoner_idle 2
+prisoner_run 4
+prisoner_hit 2
+prisoner_die 2
