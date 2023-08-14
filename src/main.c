@@ -18,6 +18,8 @@
 
 #define DEFAULT_SIZE                                                                   \
     (Vector2) { 64, 64 }
+#define DEFAULT_SCALE                                                                  \
+    (Vector2) { 2, 2 }
 
 #define GET_ECS_TABLE(compType, entityId)                                              \
     entitiesTable[(compType)*MAX_ENTITIES + (entityId)]
@@ -44,7 +46,7 @@ typedef struct TransformComp {
 typedef struct SpriteRender {
     int entityId;
     Sprite sprite;
-    Vector2 size, pivot;
+    Vector2 size, pivot;    // TODO: remove?
     Color tint;
     bool flipX, flipY;
 } SpriteRender;
@@ -85,8 +87,8 @@ static Animation compAnimation[MAX_ANIMATIONS];
 
 static int compCounts[MAX_COMPONENTS];
 static int maxComponents[] = {MAX_TRANSFORMS, MAX_SPRITERENDER, MAX_ANIMATIONS};
-static void (*componentInits[]) (int, int) = {initTransform, initSpriteRender, initAnimation};
-
+static void (*componentInits[])(int, int) = {initTransform, initSpriteRender,
+                                             initAnimation};
 
 //--------------------------------------------------------------------------------------
 // Program main entry point
@@ -117,8 +119,8 @@ int main(void) {
         createTrigger(i * 20, i * 20);
     }
 
-    const char *spriteNames[] = {"policeman_idle_0", "policeman_die_0",
-                                 "policeman_hit_0",  "policeman_zombie_run_2",
+    const char *spriteNames[] = {"medical_bag", "ammo_bag",
+                                 "machine_gun",  "policeman_zombie_run_2",
                                  "prisoner_idle_0",  "prisoner_zombie_run_0"};
     player = createPlayer(50, 50);
     for (int i = 0; i < 10; i++) {
@@ -154,21 +156,30 @@ int main(void) {
             input.x -= 1;
         }
 
-        if (IsKeyPressed(KEY_Z)) {
-            bool inverted =
-                !compSpriteRender[GET_ECS_TABLE(COMP_SPRITERENDER, player)].flipX;
-            compSpriteRender[GET_ECS_TABLE(COMP_SPRITERENDER, player)].flipX = inverted;
-        }
-        if (IsKeyPressed(KEY_X)) {
-            bool inverted =
-                !compSpriteRender[GET_ECS_TABLE(COMP_SPRITERENDER, player)].flipY;
-            compSpriteRender[GET_ECS_TABLE(COMP_SPRITERENDER, player)].flipY = inverted;
-        }
+        TransformComp *playerTransf =
+            &compTransform[GET_ECS_TABLE(COMP_TRANSFORM, player)];
+        Animation *playerAnim = &compAnimation[GET_ECS_TABLE(COMP_ANIMATION, player)];
+        SpriteRender *playerRender =
+            &compSpriteRender[GET_ECS_TABLE(COMP_SPRITERENDER, player)];
 
         Vector2 velocity = Vector2Scale(Vector2Normalize(input), dt * 100);
-        compTransform[GET_ECS_TABLE(COMP_TRANSFORM, player)].position =
-            Vector2Add(compTransform[player].position, velocity);
+        playerTransf->position = Vector2Add(compTransform[player].position, velocity);
 
+        if (Vector2Equals(velocity, Vector2Zero())) {
+            playerAnim->animSprite = AssetsGetAnimation("policeman_idle");
+            playerAnim->frameDuration = 0.2f;
+        } else {
+            playerAnim->animSprite = AssetsGetAnimation("policeman_run");
+            playerAnim->frameDuration = 0.09f;
+        }
+
+        if (velocity.x < 0) {
+            playerRender->flipX = true;
+        } else if (velocity.x > 0) {
+            playerRender->flipX = false;
+        }
+
+        // update systems
         processAnimation(dt);
         //------------------------------------------------------------------------------
 
@@ -208,15 +219,15 @@ static int createComponent(ComponentType compType, int entity) {
 static void initTransform(int transf, int entity) {
     compTransform[transf].entityId = entity;
     compTransform[transf].position = Vector2Zero();
-    compTransform[transf].scale = Vector2One();
+    compTransform[transf].scale = DEFAULT_SCALE;
     compTransform[transf].rotation = 0;
 }
 
 static void initSpriteRender(int sRender, int entity) {
     compSpriteRender[sRender].entityId = entity;
     compSpriteRender[sRender].sprite = (Sprite){0};
-    compSpriteRender[sRender].size = DEFAULT_SIZE;
-    compSpriteRender[sRender].pivot = Vector2Scale(DEFAULT_SIZE, 0.5f);
+    compSpriteRender[sRender].size = Vector2Zero();
+    compSpriteRender[sRender].pivot = Vector2Zero();
     compSpriteRender[sRender].tint = WHITE;
     compSpriteRender[sRender].flipX = false;
     compSpriteRender[sRender].flipY = false;
@@ -275,8 +286,8 @@ static void processSpriteRenderSystem(void) {
         srcRect.width *= mult.x;
         srcRect.height *= mult.y;
         Rectangle destRect = {transf.position.x, transf.position.y,
-                              transf.scale.x * sRender.size.x,
-                              transf.scale.y * sRender.size.y};
+                              transf.scale.x * sRender.sprite.source.width,
+                              transf.scale.y * sRender.sprite.source.height};
         DrawTexturePro(sRender.sprite.tex, srcRect, destRect, Vector2Zero(),
                        transf.rotation, sRender.tint);
     }
