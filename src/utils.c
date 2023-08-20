@@ -1,18 +1,23 @@
-#include "mem.h"
+#include "utils.h"
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
-void ArenaInit(Arena *a, size_t capacity) {
-    a->buff = malloc(capacity * sizeof(unsigned char));
-    a->buffLen = capacity;
-    a->currOffset = 0;
-    a->prevOffset = 0;
+static bool isPowerOfTwo(uintptr_t x);
+static uintptr_t alignForward(uintptr_t ptr, size_t align);
+
+void ArenaInit(Arena *arena, void *backingBuffer, size_t capacity) {
+    arena->buff = (unsigned char *)backingBuffer;
+    arena->buffLen = capacity;
+    arena->currOffset = 0;
+    arena->prevOffset = 0;
 }
 
-static bool isPowerOfTwo(uintptr_t x) { return (x & (x - 1)) == 0; }
+static bool isPowerOfTwo(uintptr_t x) {
+    return (x & (x - 1)) == 0;
+}
 
 static uintptr_t alignForward(uintptr_t ptr, size_t align) {
     uintptr_t p, a, mod;
@@ -31,16 +36,16 @@ static uintptr_t alignForward(uintptr_t ptr, size_t align) {
     return p;
 }
 
-void *ArenaAllocAligned(Arena *a, size_t size, size_t align) {
-    uintptr_t currPtr = (uintptr_t)a->buff + (uintptr_t)a->currOffset;
+void *ArenaAllocAligned(Arena *arena, size_t size, size_t align) {
+    uintptr_t currPtr = (uintptr_t)arena->buff + (uintptr_t)arena->currOffset;
     uintptr_t offset = alignForward(currPtr, align);
-    offset -= (uintptr_t)a->buff;
+    offset -= (uintptr_t)arena->buff;
 
-    if (offset + size <= a->buffLen) {
-        void *ptr = &a->buff[offset];
-        a->prevOffset = offset;
-        a->currOffset = offset + size;
-        
+    if (offset + size <= arena->buffLen) {
+        void *ptr = &arena->buff[offset];
+        arena->prevOffset = offset;
+        arena->currOffset = offset + size;
+
         memset(ptr, 0, size);
         return ptr;
     }
@@ -49,8 +54,8 @@ void *ArenaAllocAligned(Arena *a, size_t size, size_t align) {
     return NULL;
 }
 
-void *ArenaAlloc(Arena *a, size_t size) {
-    return ArenaAllocAligned(a, size, DEFAULT_ALIGNMENT);
+void *ArenaAlloc(Arena *arena, size_t size) {
+    return ArenaAllocAligned(arena, size, DEFAULT_ALIGNMENT);
 }
 
 void *ArenaReallocAligned(Arena *a, void *oldMemory, size_t oldSize, size_t newSize,
@@ -81,25 +86,20 @@ void *ArenaReallocAligned(Arena *a, void *oldMemory, size_t oldSize, size_t newS
     return NULL;
 }
 
-void *ArenaRealloc(Arena *a, void *oldMemory, size_t oldSize, size_t newSize) {
-    return ArenaReallocAligned(a, oldMemory, oldSize, newSize, DEFAULT_ALIGNMENT);
+void *ArenaRealloc(Arena *arena, void *oldMemory, size_t oldSize, size_t newSize) {
+    return ArenaReallocAligned(arena, oldMemory, oldSize, newSize, DEFAULT_ALIGNMENT);
 }
 
-void ArenaClear(Arena *a) {
-    a->prevOffset = 0;
-    a->currOffset = 0;
+void ArenaReset(Arena *arena) {
+    arena->prevOffset = 0;
+    arena->currOffset = 0;
 }
 
-void ArenaDestroy(Arena *a) {
-    ArenaClear(a);
-    free(a->buff);
-}
-
-TempArena TempArenaBegin(Arena *a) {
+TempArena TempArenaBegin(Arena *arena) {
     TempArena temp;
-    temp.arena = a;
-    temp.prevOffset = a->prevOffset;
-    temp.currOffset = a->currOffset;
+    temp.arena = arena;
+    temp.prevOffset = arena->prevOffset;
+    temp.currOffset = arena->currOffset;
     return temp;
 }
 

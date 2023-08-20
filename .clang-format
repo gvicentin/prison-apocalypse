@@ -38,3 +38,7 @@ AlignConsecutiveMacros: true
 # AllowShortEnumsOnASingleLine (boolean)
 # Don't put enum in a single line if it fit. 
 AllowShortEnumsOnASingleLine: false
+
+# AllowShortFunctionsOnASingleLine
+# Only put everything on the same line if it's empty
+AllowShortFunctionsOnASingleLine: Empty
