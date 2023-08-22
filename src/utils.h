@@ -31,10 +31,14 @@ typedef struct AList {
     size_t capacity;
 } AList;
 
+typedef struct HTableEntry {
+    const char *key;
+    int value;
+} HTableEntry;
+
 typedef struct HTable {
-    Arena *arna;
-    char **keys;
-    int *elmnts;
+    Arena *arena;
+    HTableEntry *entries;
     size_t capacity;
     size_t size;
 } HTable;
@@ -57,14 +61,14 @@ void TempArenaEnd(TempArena temp);
 void AListInit(AList *list, Arena *arena);
 void AListReset(AList *list);
 void AListAppend(AList *list, int elmnt);
-void AListSet(AList *list, size_t idx, int elmnt);
-int AListGet(AList *list, size_t idx);
-int AListRemove(AList *list, size_t idx);
-int AListQuickRemove(AList *list, size_t idx);
+
+#define AListGet(list, idx) (list)->elmnts[(idx)]
+#define AListSize(list) (list)->size
 
 // Hash Table
 //
 void HTableInit(HTable *table, Arena *arena);
+void HTableExpand(HTable *table, size_t newCapacity);
 void HTableReset(HTable *table);
 void HTableSet(HTable *table, const char *key, int elmnt);
 int HTableGet(HTable *table, const char *key);
