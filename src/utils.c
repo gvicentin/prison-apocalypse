@@ -10,12 +10,6 @@
 #define FNV_OFFSET         14695981039346656037UL
 #define FNV_PRIME          1099511628211UL
 
-static bool isPowerOfTwo(uintptr_t x);
-static uintptr_t alignForward(uintptr_t ptr, size_t align);
-static uint64_t hashKey(const char *key);
-static void HTableSetEntry(Arena *arena, HTableEntry *entries, size_t capacity,
-                           const char *key, int elmnt, size_t *pSize);
-
 void ArenaInit(Arena *arena, void *backingBuffer, size_t capacity) {
     arena->buff = (unsigned char *)backingBuffer;
     arena->buffLen = capacity;

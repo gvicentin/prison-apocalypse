@@ -1,172 +1,222 @@
-/* TODO: Assert number of assets loaded */
 #include "assets.h"
-#include "raylib.h"
 
-#include <stdint.h>
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "raylib.h"
+#include "utils.h"
+
 #ifndef ASSETS_PATH
 #define ASSETS_PATH "./assets"
 #endif
-#define MAX_TEXTURES   8
-#define MAX_SPRITES    256
-#define MAX_ANIMATIONS 16
-#define TABLE_CAPACITY 256
-#define FNV_OFFSET     14695981039346656037UL
-#define FNV_PRIME      1099511628211UL
 
-typedef struct AssetTable {
-    char *keysArray[TABLE_CAPACITY];
-    int assetsArray[TABLE_CAPACITY];
-} AssetTable;
+#define ARENA_BUF_LEN Kilobyte(500)
 
-static AssetTable assetTable = {0};
-static Texture2D textures[MAX_TEXTURES] = {0};
-static Sprite sprites[MAX_SPRITES] = {0};
-static AnimationSprite animations[MAX_ANIMATIONS] = {0};
-static int textureCount = 0;
-static int spriteCount = 0;
-static int animationsCount = 0;
+#define ASSET_NAME_MAX 64
 
-static void addAssetToTable(const char *assetName, int assetId);
-static int getAssetIdFromTable(const char *assetName);
-static uint64_t hashKey(const char *key);
+#define TABLE_INITIAL_SIZE 512
+
+#define MAX_ASSETENTRIES 16
+#define MAX_TEXTURES     8
+#define MAX_SPRITES      256
+#define MAX_ANIMATIONS   16
+
+typedef struct AssetEntry {
+    AssetLoader loader;
+    char name[ASSET_NAME_MAX];
+} AssetEntry;
+
+// Asset loader functions
+static int loadSpritesheet(const char *name);
+static int loadAnimation(const char *name);
+static int loadTileset(const char *name);
+
+// Liner allocator
+static Arena arenaAlloc;
+
+// Asset entries to be loaded
+static AssetEntry *assetEntries;
+static int assetEntriesCount;
+
+// Table for storing asset indices
+static HTable assetTable;
+
+// Pointer for all assets loaded
+static Texture2D *assetTextures;
+static Sprite *assetSprites;
+static Animation *assetAnim;
+
+// Count of every asset type
+static int assetCounts[ASSET_COUNT];
+
+// Loaders func pointers
+static int (*loaders[])(const char *) = {loadSpritesheet, loadAnimation, loadTileset};
 
 int AssetsInit(void) {
-    // path where the assets will be loaded
-    ChangeDirectory(ASSETS_PATH);
+    // initialize linear allocator
+    void *backingBuffer = malloc(ARENA_BUF_LEN);
+    ArenaInit(&arenaAlloc, backingBuffer, ARENA_BUF_LEN);
+    if (backingBuffer == NULL) {
+        TraceLog(LOG_ERROR, "Failed to allocate memory for Arena");
+        return 1;
+    }
 
-    AssetsLoadSpritesheet("entities");
-    AssetsLoadAnimations("entities");
+    // make room for asset entries
+    assetEntries = ArenaAlloc(&arenaAlloc, sizeof(AssetEntry) * MAX_ASSETENTRIES);
+    assetEntriesCount = 0;
 
-    TraceLog(LOG_DEBUG, "Textures loaded: %u/%u", textureCount, MAX_TEXTURES);
-    TraceLog(LOG_DEBUG, "Sprites loaded: %u/%u", spriteCount, MAX_SPRITES);
-    TraceLog(LOG_DEBUG, "Animations loaded: %u/%u", animationsCount, MAX_ANIMATIONS);
+    // make room for assets
+    assetTextures = ArenaAlloc(&arenaAlloc, sizeof(Texture2D) * MAX_TEXTURES);
+    assetSprites = ArenaAlloc(&arenaAlloc, sizeof(Sprite) * MAX_SPRITES);
+    assetAnim = ArenaAlloc(&arenaAlloc, sizeof(Animation) * MAX_ANIMATIONS);
+    memset(assetCounts, 0, sizeof(assetCounts));
+
+    // init asset table
+    HTableInit(&assetTable, &arenaAlloc);
+    HTableExpand(&assetTable, sizeof(int) * 1024);
 
     return 0;
 }
 
-void AssetsDestroy(void) {
-    for (int i = 0; i < textureCount; ++i) {
-        UnloadTexture(textures[i]);
-    }
-
-    // deinitialize asset table
-    for (int i = 0; i < TABLE_CAPACITY; ++i) {
-        if (assetTable.keysArray[i] != NULL) {
-            free(assetTable.keysArray[i]);
-        }
-    }
+void AssetAdd(AssetLoader loader, const char *name) {
+    AssetEntry *entry = &assetEntries[assetEntriesCount];
+    entry->loader = loader;
+    strncpy(entry->name, name, 64);
+    ++assetEntriesCount;
 }
 
-void AssetsLoadSpritesheet(const char *spritesheet) {
-    char imageFilepath[256], metaFilepath[256];
+static int loadSpritesheet(const char *name) {
+    char imageFilepath[ASSET_NAME_MAX];
+    char metaFilepath[ASSET_NAME_MAX];
 
-    snprintf(imageFilepath, 256, "%s.png", spritesheet);
-    snprintf(metaFilepath, 256, "%s.sprite", spritesheet);
+    // If this fails, needs to increase maxs
+    assert(assetCounts[ASSET_TEXTURE] < MAX_TEXTURES);
+    assert(assetCounts[ASSET_SPRITE] < MAX_SPRITES);
 
-    // load from dist to GPU
-    textures[textureCount] = LoadTexture(imageFilepath);
+    snprintf(imageFilepath, ASSET_NAME_MAX, "%s.png", name);
+    snprintf(metaFilepath, ASSET_NAME_MAX, "%s.sprite", name);
+
+    // load image from disc to GPU
+    int textureCount = assetCounts[ASSET_TEXTURE];
+    assetTextures[textureCount] = LoadTexture(imageFilepath);
+    if (assetTextures[textureCount].id <= 0) {
+        // failed to load texture
+        return 1;
+    }
+    ++assetCounts[ASSET_TEXTURE];
 
     char *metaContent = LoadFileText(metaFilepath);
+    if (metaContent == NULL) {
+        // failed to load file
+        return 1;
+    }
+
     char *line_token = strtok(metaContent, "\n");
     while (line_token != NULL) {
         char sprite[32];
         int x, y, width, height;
-
-        // creating sprite
         sscanf(line_token, "%31s %d %d %d %d", sprite, &x, &y, &width, &height);
-        sprites[spriteCount] = (Sprite){textures[textureCount], {x, y, width, height}};
-        addAssetToTable(sprite, spriteCount++);
+
+        // creating sprite and adding it to table
+        int spriteCount = assetCounts[ASSET_SPRITE];
+        assetSprites[spriteCount] =
+            (Sprite){assetTextures[textureCount], {x, y, width, height}};
+        HTableSet(&assetTable, sprite, spriteCount);
+        ++assetCounts[ASSET_SPRITE];
 
         line_token = strtok(NULL, "\n");
     }
-    ++textureCount;
 
     // cleanup
     free(metaContent);
+    return 0;
 }
 
-void AssetsLoadAnimations(const char *anim) {
-    char animFilepath[256];
+static int loadAnimation(const char *name) {
+    char animFilepath[ASSET_NAME_MAX];
 
-    snprintf(animFilepath, 256, "%s.anim", anim);
+    // If this fails, needs to increase max
+    assert(assetCounts[ASSET_ANIMATION] < MAX_ANIMATIONS);
+
+    snprintf(animFilepath, ASSET_NAME_MAX, "%s.anim", name);
 
     char *animContent = LoadFileText(animFilepath);
+    if (animContent == NULL) {
+        // failed to load file
+        return 1;
+    }
+
     char *line_token = strtok(animContent, "\n");
     while (line_token != NULL) {
-        char animName[32], spriteName[36];
+        char animName[32];
+        char spriteName[36];
         int frameCount;
 
         sscanf(line_token, "%31s %d", animName, &frameCount);
-        animations[animationsCount].frameCount = frameCount;
+
+        int animCount = assetCounts[ASSET_ANIMATION];
+        assetAnim[animCount].frameCount = frameCount;
         for (int i = 0; i < frameCount; ++i) {
             sprintf(spriteName, "%s_%d", animName, i);
-            animations[animationsCount].frames[i] = AssetsGetSprite(spriteName);
+            assetAnim[animCount].frames[i] = AssetsGetSprite(spriteName);
         }
 
-        addAssetToTable(animName, animationsCount++);
+        // add asset to table
+        HTableSet(&assetTable, animName, animCount);
+        ++assetCounts[ASSET_ANIMATION];
+
         line_token = strtok(NULL, "\n");
     }
-    
+
     // cleanup
     free(animContent);
+    return 0;
 }
 
-Sprite AssetsGetSprite(const char *sprite) {
-    int spriteId = getAssetIdFromTable(sprite);
-    return sprites[spriteId];
+static int loadTileset(const char *name) {
+    assert(0 && "Not implemented");
+    return 0;
 }
 
-AnimationSprite AssetsGetAnimation(const char *anim) {
-    int animId = getAssetIdFromTable(anim);
-    return animations[animId];
-}
+int AssetLoadSync(void) {
+    // Set correct directory to start loading
+    ChangeDirectory(ASSETS_PATH);
 
-static void addAssetToTable(const char *assetName, int assetId) {
-    uint64_t hash = hashKey(assetName);
-    int index = hash % TABLE_CAPACITY;
-
-    while (assetTable.keysArray[index] != NULL) {
-        if (strcmp(assetName, assetTable.keysArray[index]) == 0) {
-            // replace key
-            assetTable.assetsArray[index] = assetId;
+    for (int i = 0; i < assetEntriesCount; ++i) {
+        AssetLoader loader = assetEntries[i].loader;
+        int err = loaders[loader](assetEntries[i].name);
+        if (err != 0) {
+            TraceLog(LOG_ERROR, "Error loading %s", assetEntries[i].name);
+            return 1;
         }
-        index = (index + 1) % TABLE_CAPACITY;
-    }
-
-    // duplicate string
-    char *dupKey = (char *)malloc(strlen(assetName) + 1);
-    strncpy(dupKey, assetName, strlen(assetName) + 1);
-
-    // adding new entry
-    assetTable.keysArray[index] = dupKey;
-    assetTable.assetsArray[index] = assetId;
-}
-
-static int getAssetIdFromTable(const char *assetName) {
-    uint64_t hash = hashKey(assetName);
-    int index = hash % TABLE_CAPACITY;
-
-    while (assetTable.keysArray[index] != NULL) {
-        if (strcmp(assetName, assetTable.keysArray[index]) == 0) {
-            return assetTable.assetsArray[index];
-        }
-        index = (index + 1) % TABLE_CAPACITY;
     }
 
     return 0;
 }
 
-static uint64_t hashKey(const char *key) {
-    // https://en.wikipedia.org/wiki/Fowler–Noll–Vo_hash_function
-    uint64_t hash = FNV_OFFSET;
-    for (const char *p = key; *p; p++) {
-        hash ^= (uint64_t)(unsigned char)(*p);
-        hash *= FNV_PRIME;
+Sprite AssetsGetSprite(const char *name) {
+    int idx = HTableGet(&assetTable, name);
+    return (0 <= idx && idx < assetCounts[ASSET_SPRITE]) ? assetSprites[idx]
+                                                         : (Sprite){0};
+}
+
+Animation AssetsGetAnimation(const char *name) {
+    int idx = HTableGet(&assetTable, name);
+    return (0 <= idx && idx < assetCounts[ASSET_ANIMATION]) ? assetAnim[idx]
+                                                            : (Animation){0};
+}
+
+void AssetsDestroy(void) {
+    // clean up textures
+    for (int i = 0; i < assetCounts[ASSET_TEXTURE]; ++i) {
+        UnloadTexture(assetTextures[i]);
     }
 
-    return hash;
+    // free all arena at once
+    TraceLog(LOG_DEBUG, "Cleaning Asset arena (%lu/%lu bytes used)",
+             arenaAlloc.currOffset, ARENA_BUF_LEN);
+    ArenaReset(&arenaAlloc);
+    free(arenaAlloc.buff);
 }
