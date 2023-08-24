@@ -1,0 +1,9 @@
+ground_top_left 96 96 32 32
+ground_top 128 96 32 32
+ground_top_right 160 96 32 32
+ground_left 96 128 32 32
+ground_middle 128 128 32 32
+ground_right 160 128 32 32
+ground_bottom_left 96 160 32 32
+ground_bottom 128 160 32 32
+ground_bottom_right 160 160 32 32

@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#define __USE_POSIX
 #include <string.h>
 
 #include "raylib.h"
@@ -22,6 +23,7 @@
 #define MAX_TEXTURES     8
 #define MAX_SPRITES      256
 #define MAX_ANIMATIONS   16
+#define MAX_MAPS 4
 
 typedef struct AssetEntry {
     AssetLoader loader;
@@ -31,7 +33,7 @@ typedef struct AssetEntry {
 // Asset loader functions
 static int loadSpritesheet(const char *name);
 static int loadAnimation(const char *name);
-static int loadTileset(const char *name);
+static int loadMap(const char *name);
 
 // Liner allocator
 static Arena arenaAlloc;
@@ -46,13 +48,14 @@ static HTable assetTable;
 // Pointer for all assets loaded
 static Texture2D *assetTextures;
 static Sprite *assetSprites;
-static Animation *assetAnim;
+static Animation *assetAnims;
+static Map *assetMaps;
 
 // Count of every asset type
 static int assetCounts[ASSET_COUNT];
 
 // Loaders func pointers
-static int (*loaders[])(const char *) = {loadSpritesheet, loadAnimation, loadTileset};
+static int (*loaders[])(const char *) = {loadSpritesheet, loadAnimation, loadMap};
 
 int AssetsInit(void) {
     // initialize linear allocator
@@ -70,7 +73,8 @@ int AssetsInit(void) {
     // make room for assets
     assetTextures = ArenaAlloc(&arenaAlloc, sizeof(Texture2D) * MAX_TEXTURES);
     assetSprites = ArenaAlloc(&arenaAlloc, sizeof(Sprite) * MAX_SPRITES);
-    assetAnim = ArenaAlloc(&arenaAlloc, sizeof(Animation) * MAX_ANIMATIONS);
+    assetAnims = ArenaAlloc(&arenaAlloc, sizeof(Animation) * MAX_ANIMATIONS);
+    assetMaps = ArenaAlloc(&arenaAlloc, sizeof(Map) * MAX_MAPS);
     memset(assetCounts, 0, sizeof(assetCounts));
 
     // init asset table
@@ -113,11 +117,11 @@ static int loadSpritesheet(const char *name) {
         return 1;
     }
 
-    char *line_token = strtok(metaContent, "\n");
-    while (line_token != NULL) {
-        char sprite[32];
+    char *lineToken = strtok(metaContent, "\n");
+    while (lineToken != NULL) {
+        char sprite[64];
         int x, y, width, height;
-        sscanf(line_token, "%31s %d %d %d %d", sprite, &x, &y, &width, &height);
+        sscanf(lineToken, "%63s %d %d %d %d", sprite, &x, &y, &width, &height);
 
         // creating sprite and adding it to table
         int spriteCount = assetCounts[ASSET_SPRITE];
@@ -126,7 +130,7 @@ static int loadSpritesheet(const char *name) {
         HTableSet(&assetTable, sprite, spriteCount);
         ++assetCounts[ASSET_SPRITE];
 
-        line_token = strtok(NULL, "\n");
+        lineToken = strtok(NULL, "\n");
     }
 
     // cleanup
@@ -148,26 +152,26 @@ static int loadAnimation(const char *name) {
         return 1;
     }
 
-    char *line_token = strtok(animContent, "\n");
-    while (line_token != NULL) {
-        char animName[32];
-        char spriteName[36];
+    char *lineToken = strtok(animContent, "\n");
+    while (lineToken != NULL) {
+        char animName[64];
+        char spriteName[128];
         int frameCount;
 
-        sscanf(line_token, "%31s %d", animName, &frameCount);
+        sscanf(lineToken, "%31s %d", animName, &frameCount);
 
         int animCount = assetCounts[ASSET_ANIMATION];
-        assetAnim[animCount].frameCount = frameCount;
+        assetAnims[animCount].frameCount = frameCount;
         for (int i = 0; i < frameCount; ++i) {
-            sprintf(spriteName, "%s_%d", animName, i);
-            assetAnim[animCount].frames[i] = AssetsGetSprite(spriteName);
+            snprintf(spriteName, 128, "%s_%d", animName, i);
+            assetAnims[animCount].frames[i] = AssetsGetSprite(spriteName);
         }
 
         // add asset to table
         HTableSet(&assetTable, animName, animCount);
         ++assetCounts[ASSET_ANIMATION];
 
-        line_token = strtok(NULL, "\n");
+        lineToken = strtok(NULL, "\n");
     }
 
     // cleanup
@@ -175,8 +179,64 @@ static int loadAnimation(const char *name) {
     return 0;
 }
 
-static int loadTileset(const char *name) {
-    assert(0 && "Not implemented");
+static int loadMap(const char *name) {
+    char mapFilepath[ASSET_NAME_MAX];
+    int tilesetCount;
+    int layersCount;
+    int width, height;
+
+    // If this fails, needs to increase max
+    assert(assetCounts[ASSET_MAP] < MAX_MAPS);
+
+    snprintf(mapFilepath, ASSET_NAME_MAX, "%s.map", name);
+
+    char *mapContent = LoadFileText(mapFilepath);
+    if (mapContent == NULL) {
+        // failed to load file
+        return 1;
+    }
+
+    char *endLine;
+    char *lineToken = strtok_r(mapContent, "\n", &endLine);
+    if (lineToken == NULL) {
+        // should have at least one line
+        return 1;
+    }
+        
+    // read metadata line
+    sscanf(lineToken, "%d %d %d %d", &tilesetCount, &layersCount, &width, &height);
+    lineToken = strtok_r(NULL, "\n", &endLine);
+
+    int mapCount = assetCounts[ASSET_MAP];
+    assetMaps[mapCount].width = width;
+    assetMaps[mapCount].height = height;
+
+    assetMaps[mapCount].tilesetCount = tilesetCount;
+    for (int i = 0; i < tilesetCount; ++i) {
+        char spriteName[64];
+        sscanf(lineToken, "%63s", spriteName);
+        assetMaps[mapCount].tileset[i] = AssetsGetSprite(spriteName);
+        lineToken = strtok_r(NULL, "\n", &endLine);
+    }
+
+    int tileCount = 0;
+    while (lineToken != NULL) {
+        char *endColumn;
+        char *columnToken = strtok_r(lineToken, " ", &endColumn);
+        while (columnToken != NULL) {
+            int tile;
+            sscanf(columnToken, "%d", &tile);
+            assetMaps[mapCount].layers[0].tiles[tileCount++] = tile;
+            columnToken = strtok_r(NULL, " ", &endColumn);
+        }
+        lineToken = strtok_r(NULL, "\n", &endLine);
+    }
+
+    HTableSet(&assetTable, "prison", mapCount);
+    ++assetCounts[ASSET_MAP];
+
+    // cleanup
+    free(mapContent);
     return 0;
 }
 
@@ -204,8 +264,13 @@ Sprite AssetsGetSprite(const char *name) {
 
 Animation AssetsGetAnimation(const char *name) {
     int idx = HTableGet(&assetTable, name);
-    return (0 <= idx && idx < assetCounts[ASSET_ANIMATION]) ? assetAnim[idx]
+    return (0 <= idx && idx < assetCounts[ASSET_ANIMATION]) ? assetAnims[idx]
                                                             : (Animation){0};
+}
+
+Map *AssetGetMap(const char *name) {
+    int idx = HTableGet(&assetTable, name);
+    return (0 <= idx && idx < assetCounts[ASSET_MAP]) ? &assetMaps[idx] : NULL;
 }
 
 void AssetsDestroy(void) {

@@ -20,7 +20,7 @@ TESTS    := $(patsubst $(SRCS_DIR)/%.c, $(TESTBIN_DIR)/%.test, $(TESTSRCS))
 
 .PHONY: all clean
 
-all: clean compile
+all: compile compile-tests
 
 compile-deps:
 	$(MAKE) -C $(RAYLIB_DIR) PLATFORM=PLATFORM_DESKTOP RAYLIB_LIBTYPE=SHARED

@@ -4,11 +4,15 @@
 #include <raylib.h>
 
 #define MAX_ANIM_FRAMES 4
+#define MAX_TILESETS    32
+#define MAX_MAP_LAYERS  4
+#define MAX_MAP_WIDTH   64
+#define MAX_MAP_HEIGHT  64
 
 typedef enum {
     ASSET_LOADER_SPRITESHEET = 0,
     ASSET_LOADER_ANIMATION,
-    ASSET_LOADER_TILESET,
+    ASSET_LOADER_MAP,
     ASSET_LOADER_COUNT
 } AssetLoader;
 
@@ -16,8 +20,6 @@ typedef enum {
     ASSET_TEXTURE = 0,
     ASSET_SPRITE,
     ASSET_ANIMATION,
-    ASSET_TILE,
-    ASSET_TILESET,
     ASSET_MAP,
     ASSET_COUNT
 } AssetType;
@@ -28,10 +30,23 @@ typedef struct Sprite {
 } Sprite;
 
 typedef struct Animation {
-    Sprite frames[MAX_ANIM_FRAMES];
     int frameCount;
     float frameDuration;
+    Sprite frames[MAX_ANIM_FRAMES];
 } Animation;
+
+typedef struct MapLayer {
+    int width, height;
+    int tiles[MAX_MAP_WIDTH * MAX_MAP_HEIGHT];
+} MapLayer;
+
+typedef struct Map {
+    int tilesetCount;
+    int width, height;
+    int layersCount;
+    Sprite tileset[MAX_TILESETS];
+    MapLayer layers[MAX_MAP_LAYERS];
+} Map;
 
 int AssetsInit(void);
 
@@ -41,6 +56,7 @@ int AssetLoadSync(void);
 
 Sprite AssetsGetSprite(const char *name);
 Animation AssetsGetAnimation(const char *name);
+Map *AssetGetMap(const char *name);
 
 void AssetsDestroy(void);
 
