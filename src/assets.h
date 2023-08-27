@@ -4,7 +4,7 @@
 #include <raylib.h>
 
 #define MAX_ANIM_FRAMES 4
-#define MAX_TILESETS    32
+#define MAX_TILESETS    128
 #define MAX_MAP_LAYERS  4
 #define MAX_MAP_WIDTH   64
 #define MAX_MAP_HEIGHT  64

@@ -16,9 +16,10 @@ typedef struct MapRender {
     Map *map;
     Vector2 offset;
     Vector2 scale;
+    Vector2 tileSize;
 } MapRender;
 
 void DrawSprite(SpriteRender *spriteRender);
-void DrawMap(MapRender *mapRender);
+void DrawMap(MapRender *mapRender, Vector2 cameraPos);
 
 #endif // !ECS_H

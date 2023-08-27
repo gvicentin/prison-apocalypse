@@ -23,7 +23,7 @@
 #define MAX_TEXTURES     8
 #define MAX_SPRITES      256
 #define MAX_ANIMATIONS   16
-#define MAX_MAPS 4
+#define MAX_MAPS 1
 
 typedef struct AssetEntry {
     AssetLoader loader;
@@ -85,6 +85,7 @@ int AssetsInit(void) {
 }
 
 void AssetAdd(AssetLoader loader, const char *name) {
+    assert(assetEntriesCount + 1 < MAX_ASSETENTRIES);
     AssetEntry *entry = &assetEntries[assetEntriesCount];
     entry->loader = loader;
     strncpy(entry->name, name, 64);
