@@ -4,10 +4,10 @@
 #include <raylib.h>
 
 #define MAX_ANIM_FRAMES 4
-#define MAX_TILESETS    128
-#define MAX_MAP_LAYERS  4
+#define MAX_MAP_LAYERS  3
 #define MAX_MAP_WIDTH   64
 #define MAX_MAP_HEIGHT  64
+#define MAX_MAP_TILES   MAX_MAP_WIDTH *MAX_MAP_HEIGHT
 
 typedef enum {
     ASSET_LOADER_SPRITESHEET = 0,
@@ -20,6 +20,7 @@ typedef enum {
     ASSET_TEXTURE = 0,
     ASSET_SPRITE,
     ASSET_ANIMATION,
+    ASSET_TILE,
     ASSET_MAP,
     ASSET_COUNT
 } AssetType;
@@ -35,17 +36,15 @@ typedef struct Animation {
     Sprite frames[MAX_ANIM_FRAMES];
 } Animation;
 
-typedef struct MapLayer {
-    int width, height;
-    int tiles[MAX_MAP_WIDTH * MAX_MAP_HEIGHT];
-} MapLayer;
+typedef struct Tile {
+    int id;
+    Sprite sprite;
+} Tile;
 
 typedef struct Map {
-    int tilesetCount;
     int width, height;
     int layersCount;
-    Sprite tileset[MAX_TILESETS];
-    MapLayer layers[MAX_MAP_LAYERS];
+    int tiles[MAX_MAP_LAYERS][MAX_MAP_TILES];
 } Map;
 
 int AssetsInit(void);
@@ -54,9 +53,16 @@ void AssetAdd(AssetLoader loader, const char *name);
 
 int AssetLoadSync(void);
 
+// TODO: implement render textures
+RenderTexture2D AssetCreateTexture(int width, int height);
+
 Sprite AssetsGetSprite(const char *name);
+
 Animation AssetsGetAnimation(const char *name);
-Map *AssetGetMap(const char *name);
+
+Tile AssetsGetTile(int tileId);
+
+Map AssetGetMap(const char *name);
 
 void AssetsDestroy(void);
 

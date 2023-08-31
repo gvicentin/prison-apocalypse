@@ -23,7 +23,8 @@
 #define MAX_TEXTURES     8
 #define MAX_SPRITES      256
 #define MAX_ANIMATIONS   16
-#define MAX_MAPS 1
+#define MAX_TILES        128
+#define MAX_MAPS         1
 
 typedef struct AssetEntry {
     AssetLoader loader;
@@ -49,6 +50,7 @@ static HTable assetTable;
 static Texture2D *assetTextures;
 static Sprite *assetSprites;
 static Animation *assetAnims;
+static Tile *assetTiles;
 static Map *assetMaps;
 
 // Count of every asset type
@@ -74,6 +76,7 @@ int AssetsInit(void) {
     assetTextures = ArenaAlloc(&arenaAlloc, sizeof(Texture2D) * MAX_TEXTURES);
     assetSprites = ArenaAlloc(&arenaAlloc, sizeof(Sprite) * MAX_SPRITES);
     assetAnims = ArenaAlloc(&arenaAlloc, sizeof(Animation) * MAX_ANIMATIONS);
+    assetTiles = ArenaAlloc(&arenaAlloc, sizeof(Tile) * MAX_TILES);
     assetMaps = ArenaAlloc(&arenaAlloc, sizeof(Map) * MAX_MAPS);
     memset(assetCounts, 0, sizeof(assetCounts));
 
@@ -158,11 +161,13 @@ static int loadAnimation(const char *name) {
         char animName[64];
         char spriteName[128];
         int frameCount;
+        float frameDuration;
 
-        sscanf(lineToken, "%31s %d", animName, &frameCount);
+        sscanf(lineToken, "%31s %d %f", animName, &frameCount, &frameDuration);
 
         int animCount = assetCounts[ASSET_ANIMATION];
         assetAnims[animCount].frameCount = frameCount;
+        assetAnims[animCount].frameDuration = frameDuration;
         for (int i = 0; i < frameCount; ++i) {
             snprintf(spriteName, 128, "%s_%d", animName, i);
             assetAnims[animCount].frames[i] = AssetsGetSprite(spriteName);
@@ -203,7 +208,7 @@ static int loadMap(const char *name) {
         // should have at least one line
         return 1;
     }
-        
+
     // read metadata line
     sscanf(lineToken, "%d %d %d %d", &tilesetCount, &layersCount, &width, &height);
     lineToken = strtok_r(NULL, "\n", &endLine);
@@ -211,26 +216,36 @@ static int loadMap(const char *name) {
     int mapCount = assetCounts[ASSET_MAP];
     assetMaps[mapCount].width = width;
     assetMaps[mapCount].height = height;
+    assetMaps[mapCount].layersCount = layersCount;
 
-    assetMaps[mapCount].tilesetCount = tilesetCount;
+    int prevTilesCount = assetCounts[ASSET_TILE];
+
     for (int i = 0; i < tilesetCount; ++i) {
         char spriteName[64];
         sscanf(lineToken, "%63s", spriteName);
-        assetMaps[mapCount].tileset[i] = AssetsGetSprite(spriteName);
+
+        int tileCount = assetCounts[ASSET_TILE];
+        assert(tileCount < MAX_TILES);
+        assetTiles[tileCount].id = tileCount;
+        assetTiles[tileCount].sprite = AssetsGetSprite(spriteName);
+        ++assetCounts[ASSET_TILE];
+
         lineToken = strtok_r(NULL, "\n", &endLine);
     }
 
-    int tileCount = 0;
-    while (lineToken != NULL) {
-        char *endColumn;
-        char *columnToken = strtok_r(lineToken, " ", &endColumn);
-        while (columnToken != NULL) {
-            int tile;
-            sscanf(columnToken, "%d", &tile);
-            assetMaps[mapCount].layers[0].tiles[tileCount++] = tile;
-            columnToken = strtok_r(NULL, " ", &endColumn);
+    for (int layer = 0; layer < layersCount; ++layer) {
+        int tileAccum = 0;
+        while (lineToken != NULL) {
+            char *endColumn;
+            char *columnToken = strtok_r(lineToken, " ", &endColumn);
+            while (columnToken != NULL) {
+                int tile;
+                sscanf(columnToken, "%d", &tile);
+                assetMaps[mapCount].tiles[layer][tileAccum++] = tile + prevTilesCount;
+                columnToken = strtok_r(NULL, " ", &endColumn);
+            }
+            lineToken = strtok_r(NULL, "\n", &endLine);
         }
-        lineToken = strtok_r(NULL, "\n", &endLine);
     }
 
     HTableSet(&assetTable, "prison", mapCount);
@@ -269,9 +284,13 @@ Animation AssetsGetAnimation(const char *name) {
                                                             : (Animation){0};
 }
 
-Map *AssetGetMap(const char *name) {
+Tile AssetsGetTile(int tileId) {
+    return tileId < assetCounts[ASSET_TILE] ? assetTiles[tileId] : (Tile){0};
+}
+
+Map AssetGetMap(const char *name) {
     int idx = HTableGet(&assetTable, name);
-    return (0 <= idx && idx < assetCounts[ASSET_MAP]) ? &assetMaps[idx] : NULL;
+    return (0 <= idx && idx < assetCounts[ASSET_MAP]) ? assetMaps[idx] : (Map){0};
 }
 
 void AssetsDestroy(void) {
