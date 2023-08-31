@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+#
+# Prision Apocalypse CLI
+# Version: v0.1.0
+
+readonly RED=$(tput setaf 1)
+readonly GREEN=$(tput setaf 2)
+readonly YELLOW=$(tput setaf 3)
+readonly RESET=$(tput sgr0)
+
+readonly ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly ASSETS_DIR="${ROOT_DIR}/assets"
+readonly ASSETS_BUCKET="s3://prison-apocalypse-assets"
+
+exec_help() {
+    echo "Usage: $(basename $0) [OPTIONS]"
+    echo
+    echo "Synchronize assets with Amazon Simple Storage Service (S3)."
+    echo
+    echo "OPTIONS:"
+    echo "  -u, --upstream     Upload files to upstream instead of downloading them."
+    echo
+    echo "  -h, --help         Print this help message."
+    echo "  -v, --version      Print current version."
+}
+
+exec_version() {
+    grep '^# Version: ' "$0" | cut -d ':' -f 2 | tr -d ' '
+}
+
+sync_assets() {
+    local __up=${1-"0"}
+
+    local __aws=$(which aws)
+    if [ "$?" -ne 0 ]; then 
+        echo "{$RED}Please, install AWS CLI to synchronize game's assets{$RESET}"
+        exit 1
+    fi
+
+    local __source="$ASSETS_BUCKET"
+    local __target="$ASSETS_DIR"
+    if [ "${__up}" -eq 1 ]; then
+        __source="$ASSETS_DIR"
+        __target="$ASSETS_BUCKET"
+    fi
+
+    echo "${YELLOW}Syncronizing assets${RESET}"
+    ${__aws} s3 sync ${__source} ${__target} --exclude "*" --include "*.png"
+
+    echo "${GREEN}Everything is up to date${RESET}"
+}
+
+__is_upstream="0"
+
+case "$1" in
+    -u | --upstrem) __is_upstream="1" ;;
+    -v | --version) exec_version && exit 0 ;;
+    -h | --help) exec_help && exit 0 ;; 
+esac
+
+sync_assets ${__is_upstream}
