@@ -18,6 +18,8 @@ int main(void) {
     SetTraceLogLevel(LOG_DEBUG);
 
     AssetsInit();
+    
+    // init assets
     AssetAdd(ASSET_LOADER_SPRITESHEET, "entities");
     AssetAdd(ASSET_LOADER_ANIMATION, "entities");
     AssetAdd(ASSET_LOADER_SPRITESHEET, "prison");
@@ -28,6 +30,9 @@ int main(void) {
         TraceLog(LOG_ERROR, "Failed to load assets");
         return 1;
     }
+
+    // init ecs
+    ECSInit();
 
     float blockSize = 32.0f;
     float defaultScale = 2.5f;
@@ -132,7 +137,7 @@ int main(void) {
         ClearBackground(BLACK);
         BeginMode2D(camera);
 
-        DrawMapLayer(&map, camera, 0);
+        DrawMapLayer(&map, 0);
         DrawSprite(&player);
 
         EndMode2D();
@@ -143,6 +148,7 @@ int main(void) {
     // De-Initialization
     //----------------------------------------------------------------------------------
     AssetsDestroy();
+    ECSDestroy();
     CloseWindow(); // Close window and OpenGL context
     //----------------------------------------------------------------------------------
 
