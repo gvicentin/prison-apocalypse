@@ -1,6 +1,7 @@
 #ifndef ECS_H
 #define ECS_H
 
+#include <stdbool.h>
 #include "raylib.h"
 #include "assets.h"
 
@@ -17,14 +18,16 @@ typedef struct Entity {
 } Entity;
 
 typedef struct SpriteRender {
+    bool enabled;
     Sprite sprite;
+    Color tint;
     Vector2 position, scale;
     bool flipX, flipY;
     float rotation;
-    Color tint;
 } SpriteRender;
 
 typedef struct AnimRender {
+    bool enabled;
     Animation anim;
     float frameTime;
 } AnimRender;
@@ -42,7 +45,6 @@ void ECSDestroy(void);
 
 int EntityCreate(void);
 void EntityRemove(int entityId);
-
 void *ComponentCreate(int entityId, CompType type);
 
 void InitMapRender(MapRender *mapRender);

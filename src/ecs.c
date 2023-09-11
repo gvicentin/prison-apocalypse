@@ -19,9 +19,12 @@
 #define NULL_COMP -1
 
 // Component specific functions
-static void *createSpriteRender(void);
-static void *createAnimRender(void);
-static void *createMapRender(void);
+static int createSpriteRender(void **spriteRender);
+static int createAnimRender(void **animRender);
+static int createMapRender(void **mapRender);
+static void removeSpriteRender(int spriteRenderId);
+static void removeAnimRender(int animRenderId);
+static void removeMapRender(int mapRender);
 
 static Arena arenaAlloc;
 
@@ -36,9 +39,9 @@ static MapRender *compMapRender;
 
 static int compCounts[COMP_COUNT];
 
-static int compSizes[] = {sizeof(SpriteRender), sizeof(AnimRender), sizeof(MapRender)};
-
-static void * (*compCreateFP[])(void) = {createSpriteRender, createAnimRender, createMapRender};
+static int (*compCreateFP[])(void **) = {createSpriteRender, createAnimRender,
+                                         createMapRender};
+static void (*compRemoveFP[])(int) = {removeSpriteRender, removeAnimRender, removeMapRender};
 
 // systems
 static AList familyRender;
@@ -95,6 +98,7 @@ void ECSDestroy(void) {
 }
 
 int EntityCreate(void) {
+    // TODO: refactor
     assert(entitiesCount + 1 < MAX_ENTITIES);
     Entity *entity = &entities[entitiesCount];
     entity->enabled = true;
@@ -105,17 +109,82 @@ int EntityCreate(void) {
 }
 
 void EntityRemove(int entityId) {
+    // TODO: refactor
     Entity *removeEntity = &entities[entityId];
     *removeEntity = entities[--entitiesCount];
+    // remove all components
 }
 
-static int getNextAvailableComp(CompType type) {
+static int createSpriteRender(void **spriteRender) {
+    int compId; 
+
+    for (compId = 0; compId < MAX_SPRITERENDER; ++compId) {
+        if (!compSpriteRender[compId].enabled) break;
+    }
+
+    assert(compId < MAX_SPRITERENDER);
+    if (compId >= MAX_SPRITERENDER) {
+        *spriteRender = NULL;
+        return -1;
+    }
+
+    compSpriteRender[compId] = (SpriteRender) {
+        .enabled = true,
+        .sprite = {0},
+        .tint = WHITE,
+        .position = Vector2Zero(),
+        .scale = Vector2One(),
+        .flipX = false,
+        .flipY = false,
+        .rotation = 0.0f
+    };
+
+    return compId;
+}
+
+static void removeSpriteRender(int spriteRenderId) {
+    compSpriteRender[spriteRenderId].enabled = false;
+}
+
+static int createAnimRender(void **animRender) {
+    int compId;
+
+    for (compId = 0; compId < MAX_ANIMRENDER; ++compId) {
+        if (!compAnimRender[compId].enabled) break;
+    }
+
+    assert(compId < MAX_ANIMRENDER);
+    if (compId >= MAX_ANIMRENDER) {
+        *animRender = NULL;
+        return -1;
+    }
+
+    compAnimRender[compId] = (AnimRender) {
+        .enabled = true,
+        .anim = {0},
+        .frameTime = 0.0f
+    };
+
+    return compId;
+}
+
+static void removeAnimRender(int animRenderId) {
+    compAnimRender[animRenderId].enabled = false;
+}
+
+static int createMapRender(void **mapRender) {
+    return -1;
+}
+
+static void removeMapRender(int mapRender) {
 }
 
 void *ComponentCreate(int entityId, CompType type) {
     int compId;
+    void *component = NULL;
+    compId = compCreateFP[type](&component);
     entities[entityId].components[type] = compId;
-    return NULL;
+    return component;
 }
 
 void InitMapRender(MapRender *mapRender) {
