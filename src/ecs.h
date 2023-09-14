@@ -33,6 +33,7 @@ typedef struct AnimRender {
 } AnimRender;
 
 typedef struct MapRender {
+    bool enabled;
     Map map;
     Vector2 tileSize;
     Vector2 screenSize;
@@ -46,6 +47,7 @@ void ECSDestroy(void);
 int EntityCreate(void);
 void EntityRemove(int entityId);
 void *ComponentCreate(int entityId, CompType type);
+void ComponentRemove(int entityId, CompType type);
 
 void InitMapRender(MapRender *mapRender);
 
