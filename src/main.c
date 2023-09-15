@@ -1,5 +1,7 @@
+#include <stdlib.h>
 #include "assets.h"
 #include "ecs.h"
+#include "utils.h"
 #include "raylib.h"
 #include "raymath.h"
 
@@ -32,27 +34,40 @@ int main(void) {
     }
 
     // init ecs
-    ECSInit();
+    EntityComponentInit();
+
+    Arena arena = {0};
+    AList renderEntities = {0};
+    AList animEntities = {0};
+
+    ArenaInit(&arena, malloc(Kilobyte(100)), Kilobyte(100));
+    AListInit(&renderEntities, &arena);
+    AListInit(&animEntities, &arena);
 
     int player = EntityCreate();
     SpriteRender *playerSR = ComponentCreate(player, COMP_SPRITERENDER);
     playerSR->scale = (Vector2) {2, 2};
     AnimRender *playerAR = ComponentCreate(player, COMP_ANIMRENDER);
     playerAR->anim = AssetsGetAnimation("policeman_idle");
+    AListAppend(&renderEntities, player);
+    AListAppend(&animEntities, player);
 
     int gun = EntityCreate();
     SpriteRender *gunSR = ComponentCreate(gun, COMP_SPRITERENDER);
     gunSR->sprite = AssetsGetSprite("rifle");
     gunSR->scale = (Vector2) {2, 2};
     gunSR->position = (Vector2) {100, 100};
+    AListAppend(&renderEntities, gun);
 
     int map = EntityCreate();
     MapRender *mapRender = ComponentCreate(map, COMP_MAPRENDER);
     mapRender->map = AssetGetMap("prison");
     mapRender->screenSize = (Vector2) {screenWidth, screenHeight};
     mapRender->tileSize = (Vector2) {32, 32};
+    mapRender->scale = (Vector2) {2, 2};
     mapRender->renderLayersCount = 1;
-    InitMapRender(mapRender);
+
+    SystemMapInit(map);
 
     //----------------------------------------------------------------------------------
 
@@ -61,7 +76,7 @@ int main(void) {
         // Update
         //------------------------------------------------------------------------------
 
-        UpdateAnimation(playerAR, playerSR, GetFrameTime());
+        SystemAnimationUpdate(&animEntities, GetFrameTime());
         //------------------------------------------------------------------------------
 
         // Draw
@@ -70,9 +85,8 @@ int main(void) {
         ClearBackground(BLACK);
 
         EndMode2D();
-        DrawMapLayer(mapRender, 0);
-        DrawSprite(playerSR);
-        DrawSprite(gunSR);
+        SystemMapRenderLayer(map, 0);
+        SystemRenderEntities(&renderEntities);
         EndDrawing();
         //------------------------------------------------------------------------------
     }
@@ -80,7 +94,8 @@ int main(void) {
     // De-Initialization
     //----------------------------------------------------------------------------------
     AssetsDestroy();
-    ECSDestroy();
+    EntityCompDestroy();
+    free(arena.buff);
     CloseWindow(); // Close window and OpenGL context
     //----------------------------------------------------------------------------------
 

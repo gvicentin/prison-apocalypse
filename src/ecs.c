@@ -43,11 +43,6 @@ static int (*compCreateFP[])(void **) = {createSpriteRender, createAnimRender,
 static void (*compRemoveFP[])(int) = {removeSpriteRender, removeAnimRender,
                                       removeMapRender};
 
-// systems
-static AList renderEntities;
-static AList animEntities;
-static int mapEntity;
-
 int ECSInit(void) {
     void *backingBuffer = malloc(ARENA_BUF_LEN);
     ArenaInit(&arenaAlloc, backingBuffer, ARENA_BUF_LEN);
@@ -61,10 +56,6 @@ int ECSInit(void) {
     compSpriteRender = ArenaAlloc(&arenaAlloc, sizeof(SpriteRender) * MAX_SPRITERENDER);
     compAnimRender = ArenaAlloc(&arenaAlloc, sizeof(AnimRender) * MAX_ANIMRENDER);
     compMapRender = ArenaAlloc(&arenaAlloc, sizeof(MapRender));
-
-    // TODO: systems initialization
-    AListInit(&renderEntities, &arenaAlloc);
-    AListInit(&animEntities, &arenaAlloc);
 
     ECSReset();
 
@@ -84,8 +75,6 @@ void ECSReset(void) {
 
     // TODO: reset all components
     memset(compCounts, 0, sizeof(compCounts));
-
-    // TODO: reset all systems
 }
 
 void ECSDestroy(void) {
@@ -188,8 +177,9 @@ static void removeAnimRender(int animRenderId) {
 
 static int createMapRender(void **mapRender) {
     compMapRender->enabled = true;
-    compMapRender->map = (Map) {0};
+    compMapRender->map = (Map){0};
     compMapRender->tileSize = Vector2Zero();
+    compMapRender->scale = Vector2One();
     compMapRender->renderLayersCount = 0;
     memset(compMapRender->renderLayers, 0, sizeof(compMapRender->renderLayers));
     *mapRender = compMapRender;
@@ -197,7 +187,9 @@ static int createMapRender(void **mapRender) {
 }
 
 static void removeMapRender(int mapRenderId) {
-    compMapRender->enabled = false;
+    if (mapRenderId >= 0) {
+        compMapRender->enabled = false;
+    }
 }
 
 void *ComponentCreate(int entityId, CompType type) {
@@ -213,10 +205,21 @@ void ComponentRemove(int entityId, CompType type) {
     compRemoveFP[type](compId);
 }
 
-void InitMapRender(MapRender *mapRender) {
-    Map *map = &mapRender->map;
-    Vector2 tileSize = mapRender->tileSize;
-    int layersCount = mapRender->renderLayersCount;
+void SystemMapInit(int mapEntity) {
+    MapRender *mapRender;
+    Map *map;
+    Vector2 tileSize;
+    int layersCount;
+
+    if (mapEntity < 0 || mapEntity >= MAX_ENTITIES ||
+        entities[mapEntity].components[COMP_MAPRENDER] == NULL_COMP) {
+        return;
+    }
+
+    mapRender = compMapRender;
+    map = &mapRender->map;
+    tileSize = mapRender->tileSize;
+    layersCount = mapRender->renderLayersCount;
 
     for (int layer = 0; layer < layersCount; ++layer) {
         // create texture and enable for drawing
@@ -243,30 +246,51 @@ void InitMapRender(MapRender *mapRender) {
     }
 }
 
-void DrawSprite(SpriteRender *spriteRender) {
-    Rectangle src = spriteRender->sprite.source;
-    src.width = spriteRender->flipX ? -src.width : src.width;
-    src.height = spriteRender->flipY ? -src.height : src.height;
-    Rectangle dest = {spriteRender->position.x, spriteRender->position.y,
-                      spriteRender->sprite.source.width * spriteRender->scale.x,
-                      spriteRender->sprite.source.height * spriteRender->scale.y};
-    DrawTexturePro(spriteRender->sprite.tex, src, dest, Vector2Zero(),
-                   spriteRender->rotation, spriteRender->tint);
+void SystemRenderEntities(AList *renderEntities) {
+    for (size_t entityId = 0; entityId < AListSize(renderEntities); ++entityId) {
+        int compSRId = entities[entityId].components[COMP_SPRITERENDER];
+        SpriteRender *spriteRender = &compSpriteRender[compSRId];
+
+        Rectangle src = spriteRender->sprite.source;
+        src.width = spriteRender->flipX ? -src.width : src.width;
+        src.height = spriteRender->flipY ? -src.height : src.height;
+
+        Rectangle dest = {spriteRender->position.x, spriteRender->position.y,
+                          spriteRender->sprite.source.width * spriteRender->scale.x,
+                          spriteRender->sprite.source.height * spriteRender->scale.y};
+
+        DrawTexturePro(spriteRender->sprite.tex, src, dest, Vector2Zero(),
+                       spriteRender->rotation, spriteRender->tint);
+    }
 }
 
-void DrawMapLayer(MapRender *mapRender, int layer) {
+void SystemMapRenderLayer(int mapEntity, int layer) {
+    if (mapEntity < 0 || mapEntity >= MAX_ENTITIES ||
+        entities[mapEntity].components[COMP_MAPRENDER] == NULL_COMP) {
+        return;
+    }
+
+    MapRender *mapRender = compMapRender;
     Texture2D layerTex = mapRender->renderLayers[layer].texture;
 
     // draw map
     Rectangle src = {0, 0, layerTex.width, layerTex.height};
-    Rectangle dest = {0, 0, layerTex.width * 2.5f, layerTex.height * 2.5f};
+    Rectangle dest = {0, 0, layerTex.width * mapRender->scale.x,
+                      layerTex.height * mapRender->scale.y};
     DrawTexturePro(layerTex, src, dest, Vector2Zero(), 0, WHITE);
 }
 
-void UpdateAnimation(AnimRender *animRender, SpriteRender *spriteRender, float dt) {
-    int frameCount = animRender->anim.frameCount;
-    float frameDur = animRender->anim.frameDuration;
-    int currentFrame = (int)(animRender->frameTime / frameDur) % frameCount;
-    animRender->frameTime += dt;
-    spriteRender->sprite = animRender->anim.frames[currentFrame];
+void SystemAnimationUpdate(AList *animEntities, float dt) {
+    for (size_t entityId = 0; entityId < AListSize(animEntities); ++entityId) {
+        int compSRId = entities[entityId].components[COMP_SPRITERENDER];
+        int compARId = entities[entityId].components[COMP_ANIMRENDER];
+        SpriteRender *spriteRender = &compSpriteRender[compSRId];
+        AnimRender *animRender = &compAnimRender[compARId];
+
+        int frameCount = animRender->anim.frameCount;
+        float frameDur = animRender->anim.frameDuration;
+        int currentFrame = (int)(animRender->frameTime / frameDur) % frameCount;
+        animRender->frameTime += dt;
+        spriteRender->sprite = animRender->anim.frames[currentFrame];
+    }
 }

@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include "raylib.h"
 #include "assets.h"
+#include "utils.h"
 
 typedef enum {
     COMP_SPRITERENDER = 0,
@@ -41,15 +42,15 @@ typedef struct AnimRender {
 typedef struct MapRender {
     bool enabled;
     Map map;
-    Vector2 tileSize;
+    Vector2 tileSize, scale;
     Vector2 screenSize;
     int renderLayersCount;
     RenderTexture2D renderLayers[MAX_MAP_LAYERS];
 } MapRender;
 
-int ECSInit(void);
-void ECSReset(void);
-void ECSDestroy(void);
+int EntityCompInit(void);
+void EntityCompReset(void);
+void EntityCompDestroy(void);
 
 int EntityCreate(void);
 void EntityRemove(int entityId);
@@ -57,9 +58,11 @@ void EntityRemove(int entityId);
 void *ComponentCreate(int entityId, CompType type);
 void ComponentRemove(int entityId, CompType type);
 
-void InitMapRender(MapRender *mapRender);
-void DrawSprite(SpriteRender *spriteRender);
-void DrawMapLayer(MapRender *mapRender, int layer);
-void UpdateAnimation(AnimRender *animRender, SpriteRender *spriteRender, float dt);
+void SystemRenderEntities(AList *renderEntities);
+
+void SystemAnimationUpdate(AList *animEntities, float dt);
+
+void SystemMapInit(int mapEntity);
+void SystemMapRenderLayer(int mapEntity, int layer);
 
 #endif // !ECS_H
