@@ -4,3 +4,5 @@ build/
 assets/**.png
 
 compile_commands.json
+
+.gdb_history

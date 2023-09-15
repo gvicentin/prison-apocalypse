@@ -12,6 +12,12 @@ typedef enum {
     COMP_COUNT
 } CompType;
 
+typedef enum {
+    SYSTEM_RENDER = 0,
+    SYSTEM_ANIMATION,
+    SYSTEM_MAP
+} SystemType;
+
 typedef struct Entity {
     bool enabled;
     int components[COMP_COUNT];
@@ -42,15 +48,16 @@ typedef struct MapRender {
 } MapRender;
 
 int ECSInit(void);
+void ECSReset(void);
 void ECSDestroy(void);
 
 int EntityCreate(void);
 void EntityRemove(int entityId);
+
 void *ComponentCreate(int entityId, CompType type);
 void ComponentRemove(int entityId, CompType type);
 
 void InitMapRender(MapRender *mapRender);
-
 void DrawSprite(SpriteRender *spriteRender);
 void DrawMapLayer(MapRender *mapRender, int layer);
 void UpdateAnimation(AnimRender *animRender, SpriteRender *spriteRender, float dt);
