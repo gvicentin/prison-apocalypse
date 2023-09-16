@@ -34,7 +34,7 @@ int main(void) {
     }
 
     // init ecs
-    EntityComponentInit();
+    EntityCompInit();
 
     Arena arena = {0};
     AList renderEntities = {0};
@@ -45,27 +45,47 @@ int main(void) {
     AListInit(&animEntities, &arena);
 
     int player = EntityCreate();
-    SpriteRender *playerSR = ComponentCreate(player, COMP_SPRITERENDER);
-    playerSR->scale = (Vector2) {2, 2};
+
+    TransformComp *playerTransf = ComponentCreate(player, COMP_TRANSFORM);
+    playerTransf->position = (Vector2) {100, 100};
+    playerTransf->scale = (Vector2) {2, 2};
+
+    ComponentCreate(player, COMP_SPRITERENDER);
+    AListAppend(&renderEntities, player);
+
     AnimRender *playerAR = ComponentCreate(player, COMP_ANIMRENDER);
     playerAR->anim = AssetsGetAnimation("policeman_idle");
-    AListAppend(&renderEntities, player);
     AListAppend(&animEntities, player);
 
+    PlayerComp *playerComp = ComponentCreate(player, COMP_PLAYER);
+    playerComp->speed = 150.0f;
+    playerComp->idleAnim = AssetsGetAnimation("policeman_idle");
+    playerComp->runAnim = AssetsGetAnimation("policeman_run");
+
     int gun = EntityCreate();
+    
+    TransformComp *gunTransf = ComponentCreate(gun, COMP_TRANSFORM);
+    gunTransf->position = (Vector2) {100, 100};
+    gunTransf->scale = (Vector2) {2, 2};
+
     SpriteRender *gunSR = ComponentCreate(gun, COMP_SPRITERENDER);
     gunSR->sprite = AssetsGetSprite("rifle");
-    gunSR->scale = (Vector2) {2, 2};
-    gunSR->position = (Vector2) {100, 100};
     AListAppend(&renderEntities, gun);
 
     int map = EntityCreate();
+
     MapRender *mapRender = ComponentCreate(map, COMP_MAPRENDER);
     mapRender->map = AssetGetMap("prison");
-    mapRender->screenSize = (Vector2) {screenWidth, screenHeight};
-    mapRender->tileSize = (Vector2) {32, 32};
+    mapRender->tileWidth = 32;
+    mapRender->tileHeight = 32;
     mapRender->scale = (Vector2) {2, 2};
     mapRender->renderLayersCount = 1;
+
+    int camera = EntityCreate();
+    
+    CameraComp *cameraComp = ComponentCreate(camera, COMP_CAMERA);
+    cameraComp->targetTransf = playerTransf;
+    cameraComp->offset = (Vector2) {screenWidth/2.0f, screenHeight/2.0f};
 
     SystemMapInit(map);
 
@@ -75,8 +95,23 @@ int main(void) {
     while (!WindowShouldClose()) {
         // Update
         //------------------------------------------------------------------------------
+        Vector2 input = Vector2Zero();
+        if (IsKeyDown(KEY_W)) {
+            input.y -= 1;
+        }
+        if (IsKeyDown(KEY_D)) {
+            input.x += 1;
+        }
+        if (IsKeyDown(KEY_S)) {
+            input.y += 1;
+        }
+        if (IsKeyDown(KEY_A)) {
+            input.x -= 1;
+        }
 
+        SystemPlayerUpdate(player, Vector2Normalize(input), GetFrameTime());
         SystemAnimationUpdate(&animEntities, GetFrameTime());
+        SystemCameraUpdate(camera);
         //------------------------------------------------------------------------------
 
         // Draw
@@ -84,9 +119,11 @@ int main(void) {
         BeginDrawing();
         ClearBackground(BLACK);
 
-        EndMode2D();
+        BeginMode2D(cameraComp->camera);
         SystemMapRenderLayer(map, 0);
         SystemRenderEntities(&renderEntities);
+        EndMode2D();
+
         EndDrawing();
         //------------------------------------------------------------------------------
     }
