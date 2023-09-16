@@ -42,3 +42,4 @@ AllowShortEnumsOnASingleLine: false
 # AllowShortFunctionsOnASingleLine
 # Only put everything on the same line if it's empty
 AllowShortFunctionsOnASingleLine: Empty
+

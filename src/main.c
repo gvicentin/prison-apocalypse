@@ -1,5 +1,7 @@
+#include <stdlib.h>
 #include "assets.h"
 #include "ecs.h"
+#include "utils.h"
 #include "raylib.h"
 #include "raymath.h"
 
@@ -18,6 +20,8 @@ int main(void) {
     SetTraceLogLevel(LOG_DEBUG);
 
     AssetsInit();
+    
+    // init assets
     AssetAdd(ASSET_LOADER_SPRITESHEET, "entities");
     AssetAdd(ASSET_LOADER_ANIMATION, "entities");
     AssetAdd(ASSET_LOADER_SPRITESHEET, "prison");
@@ -29,113 +33,97 @@ int main(void) {
         return 1;
     }
 
-    float blockSize = 32.0f;
-    float defaultScale = 2.5f;
+    // init ecs
+    EntityCompInit();
 
-    SpriteRender player = {0};
-    player.sprite = AssetsGetSprite("policeman_idle_0");
-    player.position = (Vector2){100, 100};
-    player.scale = (Vector2){defaultScale, defaultScale};
-    player.tint = WHITE;
+    Arena arena = {0};
+    AList renderEntities = {0};
+    AList animEntities = {0};
 
-    AnimRender idleAnim = {0}, runAnim = {0};
-    idleAnim.anim = AssetsGetAnimation("policeman_idle");
-    runAnim.anim = AssetsGetAnimation("policeman_run");
-    AnimRender *curAnim;
+    ArenaInit(&arena, malloc(Kilobyte(100)), Kilobyte(100));
+    AListInit(&renderEntities, &arena);
+    AListInit(&animEntities, &arena);
 
-    MapRender map = {0};
-    map.map = AssetGetMap("prison");
-    map.tileSize = (Vector2){blockSize, blockSize};
-    map.screenSize = (Vector2){screenWidth, screenHeight};
-    map.renderLayersCount = map.map.layersCount;
-    InitMapRender(&map);
+    int player = EntityCreate();
 
-    Camera2D camera = {0};
-    camera.target =
-        Vector2Add(player.position, (Vector2){blockSize * defaultScale * 0.5f,
-                                              blockSize * defaultScale * 0.5f});
-    camera.offset = (Vector2){(float)screenWidth / 2.0f, (float)screenHeight / 2.0f};
-    camera.zoom = 1.0f;
+    TransformComp *playerTransf = ComponentCreate(player, COMP_TRANSFORM);
+    playerTransf->position = (Vector2) {100, 100};
+    playerTransf->scale = (Vector2) {2, 2};
+
+    ComponentCreate(player, COMP_SPRITERENDER);
+    AListAppend(&renderEntities, player);
+
+    AnimRender *playerAR = ComponentCreate(player, COMP_ANIMRENDER);
+    playerAR->anim = AssetsGetAnimation("policeman_idle");
+    AListAppend(&animEntities, player);
+
+    PlayerComp *playerComp = ComponentCreate(player, COMP_PLAYER);
+    playerComp->speed = 150.0f;
+    playerComp->idleAnim = AssetsGetAnimation("policeman_idle");
+    playerComp->runAnim = AssetsGetAnimation("policeman_run");
+
+    int gun = EntityCreate();
+    
+    TransformComp *gunTransf = ComponentCreate(gun, COMP_TRANSFORM);
+    gunTransf->position = (Vector2) {100, 100};
+    gunTransf->scale = (Vector2) {2, 2};
+
+    SpriteRender *gunSR = ComponentCreate(gun, COMP_SPRITERENDER);
+    gunSR->sprite = AssetsGetSprite("rifle");
+    AListAppend(&renderEntities, gun);
+
+    int map = EntityCreate();
+
+    MapRender *mapRender = ComponentCreate(map, COMP_MAPRENDER);
+    mapRender->map = AssetGetMap("prison");
+    mapRender->tileWidth = 32;
+    mapRender->tileHeight = 32;
+    mapRender->scale = (Vector2) {2, 2};
+    mapRender->renderLayersCount = 1;
+
+    int camera = EntityCreate();
+    
+    CameraComp *cameraComp = ComponentCreate(camera, COMP_CAMERA);
+    cameraComp->targetTransf = playerTransf;
+    cameraComp->offset = (Vector2) {screenWidth/2.0f, screenHeight/2.0f};
+
+    SystemMapInit(map);
+
     //----------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose()) // Detect window close button or ESC key
-    {
+    while (!WindowShouldClose()) {
         // Update
         //------------------------------------------------------------------------------
         Vector2 input = Vector2Zero();
-        float speed = 150;
-        if (IsKeyDown(KEY_UP)) {
+        if (IsKeyDown(KEY_W)) {
             input.y -= 1;
         }
-        if (IsKeyDown(KEY_RIGHT)) {
+        if (IsKeyDown(KEY_D)) {
             input.x += 1;
         }
-        if (IsKeyDown(KEY_DOWN)) {
+        if (IsKeyDown(KEY_S)) {
             input.y += 1;
         }
-        if (IsKeyDown(KEY_LEFT)) {
+        if (IsKeyDown(KEY_A)) {
             input.x -= 1;
         }
-        input = Vector2Normalize(input);
-        Vector2 vel = Vector2Scale(input, speed * GetFrameTime());
-        player.position = Vector2Add(player.position, vel);
-        // camera.target = Vector2Add(camera.target, vel);
 
-        if (Vector2Equals(vel, Vector2Zero())) {
-            curAnim = &idleAnim;
-        } else {
-            curAnim = &runAnim;
-        }
-
-        if (vel.x < 0.0f) {
-            player.flipX = true;
-        } else if (vel.x > 0.0f) {
-            player.flipX = false;
-        }
-
-        camera.target =
-            Vector2Add(player.position, (Vector2){blockSize * defaultScale * 0.5f,
-                                                  blockSize * defaultScale * 0.5f});
-        // Camera rotation controls
-        if (IsKeyDown(KEY_A))
-            camera.rotation--;
-        else if (IsKeyDown(KEY_S))
-            camera.rotation++;
-
-        // Limit camera rotation to 80 degrees (-40 to 40)
-        if (camera.rotation > 40)
-            camera.rotation = 40;
-        else if (camera.rotation < -40)
-            camera.rotation = -40;
-
-        // Camera zoom controls
-        camera.zoom += ((float)GetMouseWheelMove() * 0.05f);
-
-        if (camera.zoom > 2.0f)
-            camera.zoom = 2.0f;
-        else if (camera.zoom < 0.5f)
-            camera.zoom = 0.5f;
-
-        // Camera reset (zoom and rotation)
-        if (IsKeyPressed(KEY_R)) {
-            camera.zoom = 1.0f;
-            camera.rotation = 0.0f;
-        }
-
-        UpdateAnimation(curAnim, &player, GetFrameTime());
+        SystemPlayerUpdate(player, Vector2Normalize(input), GetFrameTime());
+        SystemAnimationUpdate(&animEntities, GetFrameTime());
+        SystemCameraUpdate(camera);
         //------------------------------------------------------------------------------
 
         // Draw
         //------------------------------------------------------------------------------
         BeginDrawing();
         ClearBackground(BLACK);
-        BeginMode2D(camera);
 
-        DrawMapLayer(&map, camera, 0);
-        DrawSprite(&player);
-
+        BeginMode2D(cameraComp->camera);
+        SystemMapRenderLayer(map, 0);
+        SystemRenderEntities(&renderEntities);
         EndMode2D();
+
         EndDrawing();
         //------------------------------------------------------------------------------
     }
@@ -143,6 +131,8 @@ int main(void) {
     // De-Initialization
     //----------------------------------------------------------------------------------
     AssetsDestroy();
+    EntityCompDestroy();
+    free(arena.buff);
     CloseWindow(); // Close window and OpenGL context
     //----------------------------------------------------------------------------------
 

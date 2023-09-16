@@ -55,7 +55,6 @@ int AssetLoadSync(void);
 
 // TODO: implement render textures
 RenderTexture2D AssetCreateTexture(int width, int height);
-
 Sprite AssetsGetSprite(const char *name);
 
 Animation AssetsGetAnimation(const char *name);
