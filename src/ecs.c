@@ -1,6 +1,7 @@
 #include "ecs.h"
 
 #include <assert.h>
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -25,6 +26,7 @@ static int createAnimRender(void **animRender);
 static int createMapRender(void **mapRender);
 static int createCamera(void **cameraComp);
 static int createPlayer(void **playerComp);
+static int createGun(void **gunComp);
 
 static void removeTransform(int transformCompId);
 static void removeSpriteRender(int spriteRenderId);
@@ -32,6 +34,7 @@ static void removeAnimRender(int animRenderId);
 static void removeMapRender(int mapRenderId);
 static void removeCamera(int cameraCompId);
 static void removePlayer(int playerCompId);
+static void removeGun(int gunId);
 
 static Arena arenaAlloc;
 
@@ -46,15 +49,16 @@ static AnimRender *compAnimRender;
 static MapRender *compMapRender;
 static CameraComp *compCamera;
 static PlayerComp *compPlayer;
+static GunComp *compGun;
 
 static int compCounts[COMP_COUNT];
 
 static int (*compCreateFP[])(void **) = {createTransform,  createSpriteRender,
                                          createAnimRender, createMapRender,
-                                         createCamera,     createPlayer};
+                                         createCamera,     createPlayer, createGun};
 static void (*compRemoveFP[])(int) = {removeTransform,  removeSpriteRender,
                                       removeAnimRender, removeMapRender,
-                                      removeCamera,     removePlayer};
+                                      removeCamera,     removePlayer, removeGun};
 
 int EntityCompInit(void) {
     void *backingBuffer = malloc(ARENA_BUF_LEN);
@@ -72,6 +76,7 @@ int EntityCompInit(void) {
     compMapRender = ArenaAlloc(&arenaAlloc, sizeof(MapRender));
     compCamera = ArenaAlloc(&arenaAlloc, sizeof(CameraComp));
     compPlayer = ArenaAlloc(&arenaAlloc, sizeof(PlayerComp));
+    compGun = ArenaAlloc(&arenaAlloc, sizeof(GunComp));
 
     EntityCompReset();
 
@@ -175,7 +180,7 @@ static int createSpriteRender(void **spriteRender) {
     }
 
     compSpriteRender[compId] = (SpriteRender){
-        .enabled = true, .sprite = {0}, .tint = WHITE, .flipX = false, .flipY = false};
+        .enabled = true, .sprite = {0}, .pivot = Vector2Zero(), .tint = WHITE, .flipX = false, .flipY = false};
 
     *spriteRender = &compSpriteRender[compId];
     return compId;
@@ -265,6 +270,19 @@ static void removePlayer(int playerCompId) {
     }
 }
 
+static int createGun(void **gunComp) {
+    compGun->enabled = true;
+    compGun->playerTransf = NULL;
+    *gunComp = compGun;
+    return 0;
+}
+
+static void removeGun(int gunId) {
+    if (gunId > 0) {
+        compGun->enabled = false;
+    }
+}
+
 void *ComponentCreate(int entityId, CompType type) {
     int compId;
     void *component = NULL;
@@ -276,6 +294,11 @@ void *ComponentCreate(int entityId, CompType type) {
 void ComponentRemove(int entityId, CompType type) {
     int compId = entities[entityId].components[type];
     compRemoveFP[type](compId);
+}
+
+void SpriteRenderSetSprite(SpriteRender *spriteRender, Sprite sprite) {
+    spriteRender->sprite = sprite;
+    spriteRender->pivot = (Vector2) {sprite.source.width / 2.0f, sprite.source.height / 2.0f };
 }
 
 void SystemMapInit(int mapEntity) {
@@ -332,7 +355,9 @@ void SystemRenderEntities(AList *renderEntities) {
                           spriteRender->sprite.source.width * transfComp->scale.x,
                           spriteRender->sprite.source.height * transfComp->scale.y};
 
-        DrawTexturePro(spriteRender->sprite.tex, src, dest, Vector2Zero(),
+        Vector2 pivotCalc = Vector2Multiply(spriteRender->pivot, transfComp->scale);
+
+        DrawTexturePro(spriteRender->sprite.tex, src, dest, pivotCalc,
                        transfComp->rotation, spriteRender->tint);
     }
 }
@@ -385,7 +410,7 @@ void SystemCameraUpdate(int cameraEntity) {
     compCamera->camera.offset = compCamera->offset;
 }
 
-void SystemPlayerUpdate(int playerEntity, Vector2 input, float dt) {
+void SystemPlayerUpdate(int playerEntity, Vector2 input, Vector2 mousePos, float dt) {
     int transformCompId = entities[playerEntity].components[COMP_TRANSFORM];
     int spriteCompId = entities[playerEntity].components[COMP_SPRITERENDER];
     int animCompId = entities[playerEntity].components[COMP_ANIMRENDER];
@@ -409,9 +434,35 @@ void SystemPlayerUpdate(int playerEntity, Vector2 input, float dt) {
         animComp->anim = playerComp->runAnim;
     }
 
-    if (vel.x > 0) {
+    if (mousePos.x > 0) {
         spriteComp->flipX = false;
-    } else if (vel.x < 0) {
+    } else if (mousePos.x < 0) {
         spriteComp->flipX = true;
     }
+}
+
+void SystemGunUpdate(int gunId, Vector2 mousePos, float dt) {
+    int gunTransformId = entities[gunId].components[COMP_TRANSFORM];
+    int gunSpriteRenderId = entities[gunId].components[COMP_SPRITERENDER];
+    if (gunTransformId == NULL_ENTITY_COMP || gunSpriteRenderId == NULL_ENTITY_COMP) {
+        return;
+    }
+   
+    TransformComp *gunTransform = &compTransform[gunTransformId];
+    SpriteRender *gunSpriteRender = &compSpriteRender[gunSpriteRenderId];
+
+    Vector2 offsetCalc = compGun->offset;
+    float rotation = atan2f(mousePos.y, mousePos.x) * RAD2DEG;
+
+    if (rotation > -90.0f && rotation < 90.0f) {
+        gunSpriteRender->flipY = false;
+    } else {
+        gunSpriteRender->flipY = true;
+    }
+
+    // gunTransform->position = Vector2Add(compGun->playerTransf->position, offsetCalc);
+    gunTransform->position = compGun->playerTransf->position;
+    gunTransform->rotation = rotation;
+
+    // DrawCircleV(, 2.0f, RED);
 }

@@ -50,7 +50,8 @@ int main(void) {
     playerTransf->position = (Vector2) {100, 100};
     playerTransf->scale = (Vector2) {2, 2};
 
-    ComponentCreate(player, COMP_SPRITERENDER);
+    SpriteRender *playerSR = ComponentCreate(player, COMP_SPRITERENDER);
+    SpriteRenderSetSprite(playerSR, AssetsGetSprite("policeman_idle_0"));
     AListAppend(&renderEntities, player);
 
     AnimRender *playerAR = ComponentCreate(player, COMP_ANIMRENDER);
@@ -69,8 +70,14 @@ int main(void) {
     gunTransf->scale = (Vector2) {2, 2};
 
     SpriteRender *gunSR = ComponentCreate(gun, COMP_SPRITERENDER);
-    gunSR->sprite = AssetsGetSprite("rifle");
+    SpriteRenderSetSprite(gunSR, AssetsGetSprite("rifle"));
+    gunSR->pivot = (Vector2) {2, 2};
+
     AListAppend(&renderEntities, gun);
+
+    GunComp *gunComp = ComponentCreate(gun, COMP_GUN);
+    gunComp->playerTransf = playerTransf;
+    gunComp->offset = (Vector2) {-5, 6};
 
     int map = EntityCreate();
 
@@ -109,9 +116,15 @@ int main(void) {
             input.x -= 1;
         }
 
-        SystemPlayerUpdate(player, Vector2Normalize(input), GetFrameTime());
-        SystemAnimationUpdate(&animEntities, GetFrameTime());
+        float dt = GetFrameTime();
+        Vector2 mousePos = GetMousePosition();
+        Vector2 screenCenter = {screenWidth/2.0f, screenHeight/2.0f};
+        Vector2 mouseCalc = Vector2Subtract(mousePos, screenCenter);
+
+        SystemPlayerUpdate(player, Vector2Normalize(input), mouseCalc, dt);
+        SystemAnimationUpdate(&animEntities, dt);
         SystemCameraUpdate(camera);
+        SystemGunUpdate(gun, mouseCalc, dt);
         //------------------------------------------------------------------------------
 
         // Draw
@@ -120,7 +133,7 @@ int main(void) {
         ClearBackground(BLACK);
 
         BeginMode2D(cameraComp->camera);
-        SystemMapRenderLayer(map, 0);
+        //SystemMapRenderLayer(map, 0);
         SystemRenderEntities(&renderEntities);
         EndMode2D();
 

@@ -13,6 +13,7 @@ typedef enum {
     COMP_MAPRENDER,
     COMP_CAMERA,
     COMP_PLAYER,
+    COMP_GUN,
     COMP_COUNT
 } CompType;
 
@@ -33,6 +34,7 @@ typedef struct SpriteRender {
     bool enabled;
 
     Sprite sprite;
+    Vector2 pivot;
     Color tint;
     bool flipX, flipY;
 } SpriteRender;
@@ -71,6 +73,12 @@ typedef struct PlayerComp {
     Animation runAnim;
 } PlayerComp;
 
+typedef struct GunComp {
+    bool enabled;
+    TransformComp *playerTransf;
+    Vector2 offset;
+} GunComp;
+
 int EntityCompInit(void);
 void EntityCompReset(void);
 void EntityCompDestroy(void);
@@ -81,6 +89,8 @@ void EntityRemove(int entityId);
 void *ComponentCreate(int entityId, CompType type);
 void ComponentRemove(int entityId, CompType type);
 
+void SpriteRenderSetSprite(SpriteRender *spriteRender, Sprite sprite);
+
 void SystemRenderEntities(AList *renderEntities);
 
 void SystemAnimationUpdate(AList *animEntities, float dt);
@@ -90,6 +100,8 @@ void SystemMapRenderLayer(int mapEntity, int layer);
 
 void SystemCameraUpdate(int cameraEntity);
 
-void SystemPlayerUpdate(int playerEntity, Vector2 input, float dt);
+void SystemPlayerUpdate(int playerEntity, Vector2 input, Vector2 mousePos, float dt);
+
+void SystemGunUpdate(int gunId, Vector2 mousePos, float dt);
 
 #endif // !ECS_H
