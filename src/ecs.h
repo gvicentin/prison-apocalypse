@@ -5,6 +5,7 @@
 
 #define MAX_ENTITIES   1024
 #define MAX_COMPONENTS 32
+#define MAX_SYSTEMS    32
 
 #define MAX_COMPONENT_TRANSFORM    1024
 #define MAX_COMPONENT_RENDER       512
@@ -24,10 +25,26 @@ typedef enum {
     COMPONENT_COUNT
 } CompType;
 
+typedef enum {
+    SYSTEM_RENDER = 0,
+    SYSTEM_SHAPE_RENDER,
+    SYSTEM_ANIM_RENDER,
+    SYSTEM_COUNT
+} SystemType;
+
 typedef struct Entity {
     bool enabled;
     int components[COMPONENT_COUNT];
 } Entity;
+
+typedef struct Component {
+    int (*createCallback)(void **);
+    void (*removeCallback)(int);
+    void *(*getCallback)(int);
+} Component;
+
+typedef struct System {
+} System;
 
 typedef struct TransformComp {
     bool enabled;
@@ -48,8 +65,18 @@ void *CreateComponent(CompType compType, int entityId);
 
 void RemoveComponent(CompType compType, int entityId);
 
+void *GetComponent(CompType compType, int entityId);
+
 void RegisterComponentCreate(CompType compType, int (*createCallback)(void **));
 
 void RegisterComponentRemove(CompType compType, void (*removeCallback)(int));
+
+void AddEntityToSystem(SystemType sysType, int entityId);
+
+void RemoveEntityFromSystem(SystemType sysType, int entityId);
+
+void RegisterSystemInsert(SystemType sysType, void (*insertCallback)(int));
+
+void RegisterSystemRemove(SystemType sysType, void (*removeCallback)(int));
 
 #endif // !ECS_H

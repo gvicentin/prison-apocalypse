@@ -6,7 +6,7 @@
 #include "raylib.h"
 
 typedef enum {
-    SHARE_RENDER_RECT = 0,
+    SHAPE_RENDER_RECT = 0,
     SHAPE_RENDER_FILLED_RECT,
     SHAPE_RENDER_CIRCLE,
     SHAPE_RENDER_CIRCLE_FILL,
@@ -48,5 +48,7 @@ typedef struct MapRenderComp {
 int InitRenderSystems(void);
 
 void DestroyRenderSystems(void);
+
+void UpdateRenderSystem(void);
 
 #endif // !RENDER_H

@@ -82,7 +82,7 @@ int AssetsInit(void) {
 
     // init asset table
     HTableInit(&assetTable, &arenaAlloc);
-    HTableExpand(&assetTable, sizeof(int) * 1024);
+    HTableExpand(&assetTable, 1024);
 
     return 0;
 }
