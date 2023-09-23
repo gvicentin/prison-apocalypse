@@ -49,6 +49,17 @@ int InitRenderSystems(void);
 
 void DestroyRenderSystems(void);
 
+int createRenderComponent(void **renderComp);
+int createShapeRenderComponent(void **shapeRenderComp);
+
+void removeRenderComponent(int renderCompId);
+void removeShapeRenderComponent(int shapeRenderCompId);
+
+void *getRenderComponent(int renderCompId);
+void *getShapeRenderComponent(int shapeRenderCompId);
+
+void addEntityToRenderSystem(int entityId);
+
 void UpdateRenderSystem(void);
 
 #endif // !RENDER_H

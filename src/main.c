@@ -44,6 +44,7 @@ int main(void) {
     RenderComp *playerRender = CreateComponent(COMPONENT_RENDER, player);
     playerRender->sprite = AssetsGetSprite("policeman_idle_0");
 
+    addEntityToRenderSystem(player);
     //----------------------------------------------------------------------------------
 
     // Main game loop
@@ -56,6 +57,8 @@ int main(void) {
         //------------------------------------------------------------------------------
         BeginDrawing();
         ClearBackground(BLACK);
+
+        UpdateRenderSystem();
 
         EndDrawing();
         //------------------------------------------------------------------------------

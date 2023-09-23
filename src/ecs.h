@@ -37,11 +37,11 @@ typedef struct Entity {
     int components[COMPONENT_COUNT];
 } Entity;
 
-typedef struct Component {
+typedef struct ComponentDef {
     int (*createCallback)(void **);
-    void (*removeCallback)(int);
     void *(*getCallback)(int);
-} Component;
+    void (*removeCallback)(int);
+} ComponentDef;
 
 typedef struct System {
 } System;
@@ -63,20 +63,14 @@ void RemoveEntity(int entityId);
 
 void *CreateComponent(CompType compType, int entityId);
 
-void RemoveComponent(CompType compType, int entityId);
-
 void *GetComponent(CompType compType, int entityId);
 
-void RegisterComponentCreate(CompType compType, int (*createCallback)(void **));
+void RemoveComponent(CompType compType, int entityId);
 
-void RegisterComponentRemove(CompType compType, void (*removeCallback)(int));
+void RegisterComponentDef(CompType compType, ComponentDef component);
 
 void AddEntityToSystem(SystemType sysType, int entityId);
 
 void RemoveEntityFromSystem(SystemType sysType, int entityId);
-
-void RegisterSystemInsert(SystemType sysType, void (*insertCallback)(int));
-
-void RegisterSystemRemove(SystemType sysType, void (*removeCallback)(int));
 
 #endif // !ECS_H

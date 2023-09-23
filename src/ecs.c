@@ -1,8 +1,8 @@
 #include "ecs.h"
 
-#include "utils.h"
 #include "raylib.h"
 #include "raymath.h"
+#include "utils.h"
 #include <assert.h>
 #include <stdlib.h>
 
@@ -14,11 +14,11 @@ static Entity *entities;
 
 static TransformComp *transformComponents;
 
-static int (*createComponentCallbacks[MAX_COMPONENTS])(void **);
-static void (*removeCompoentCallbacks[MAX_COMPONENTS])(int);
+static ComponentDef *componentDefs;
 
 static int createTransformComponent(void **transfComp);
 static void removeTransformComponent(int transfId);
+static void *getTransformComponent(int transfId);
 
 int InitECS(void) {
     void *backingBuffer = malloc(ARENA_BUF_LEN);
@@ -30,14 +30,14 @@ int InitECS(void) {
 
     entities = ArenaAlloc(&arenaAlloc, sizeof(Entity) * MAX_ENTITIES);
     transformComponents = ArenaAlloc(&arenaAlloc, sizeof(TransformComp) * MAX_ENTITIES);
+    componentDefs = ArenaAlloc(&arenaAlloc, sizeof(ComponentDef) * MAX_COMPONENTS);
 
-    // initialize callbacks
-    for (int compType = 0; compType < MAX_COMPONENTS; ++compType) {
-        createComponentCallbacks[compType] = NULL;
-        removeCompoentCallbacks[compType] = NULL;
-    }
-    RegisterComponentCreate(COMPONENT_TRANSFORM, createTransformComponent);
-    RegisterComponentRemove(COMPONENT_TRANSFORM, removeTransformComponent);
+    ComponentDef transformDef = {
+        .createCallback = createTransformComponent,
+        .removeCallback = removeTransformComponent,
+        .getCallback = getTransformComponent
+    };
+    RegisterComponentDef(COMPONENT_TRANSFORM, transformDef);
 
     return 0;
 }
@@ -86,7 +86,7 @@ void *CreateComponent(CompType compType, int entityId) {
     int compId;
     void *component = NULL;
 
-    int (*createComponent)(void **) = createComponentCallbacks[compType];
+    int (*createComponent)(void **) = componentDefs[compType].createCallback;
     if (createComponent == NULL) {
         return NULL;
     }
@@ -98,23 +98,28 @@ void *CreateComponent(CompType compType, int entityId) {
 }
 
 void RemoveComponent(CompType compType, int entityId) {
-    void (*removeComponent)(int) = removeCompoentCallbacks[compType];
+    void (*removeComponent)(int) = componentDefs[compType].removeCallback;
     if (removeComponent != NULL) {
         int compId = entities[entityId].components[compType];
         removeComponent(compId);
     }
 }
 
+void *GetComponent(CompType compType, int entityId) {
+    void *(*getComponent)(int) = componentDefs[compType].getCallback;
+    if (getComponent != NULL) {
+        int compId = entities[entityId].components[compType];
+        return getComponent(compId);
+    }
+    return NULL;
+}
+
 int GetComponentId(CompType compType, int entityId) {
     return entities[entityId].components[compType];
 }
 
-void RegisterComponentCreate(CompType compType, int (*createCallback)(void **)) {
-    createComponentCallbacks[compType] = createCallback;
-}
-
-void RegisterComponentRemove(CompType compType, void (*removeCallback)(int)) {
-    removeCompoentCallbacks[compType] = removeCallback;
+void RegisterComponentDef(CompType compType, ComponentDef componentDef) {
+    componentDefs[compType] = componentDef;
 }
 
 static int createTransformComponent(void **transfComp) {
@@ -132,9 +137,9 @@ static int createTransformComponent(void **transfComp) {
     }
 
     transformComponents[compId] = (TransformComp){.enabled = true,
-                                            .position = Vector2Zero(),
-                                            .scale = Vector2One(),
-                                            .rotation = 0};
+                                                  .position = Vector2Zero(),
+                                                  .scale = Vector2One(),
+                                                  .rotation = 0};
 
     *transfComp = &transformComponents[compId];
     return compId;
@@ -142,6 +147,10 @@ static int createTransformComponent(void **transfComp) {
 
 static void removeTransformComponent(int transfId) {
     transformComponents[transfId].enabled = false;
+}
+
+static void *getTransformComponent(int transfId) {
+    return &transformComponents[transfId];
 }
 
 // #include "ecs.h"
@@ -216,9 +225,9 @@ static void removeTransformComponent(int transfId) {
 //     entities = ArenaAlloc(&arenaAlloc, sizeof(Entity) * MAX_ENTITIES);
 //
 //     compTransform = ArenaAlloc(&arenaAlloc, sizeof(TransformComp) * MAX_TRANSFORM);
-//     compSpriteRender = ArenaAlloc(&arenaAlloc, sizeof(SpriteRender) * MAX_SPRITERENDER);
-//     compAnimRender = ArenaAlloc(&arenaAlloc, sizeof(AnimRender) * MAX_ANIMRENDER);
-//     compMapRender = ArenaAlloc(&arenaAlloc, sizeof(MapRender));
+//     compSpriteRender = ArenaAlloc(&arenaAlloc, sizeof(SpriteRender) *
+//     MAX_SPRITERENDER); compAnimRender = ArenaAlloc(&arenaAlloc, sizeof(AnimRender) *
+//     MAX_ANIMRENDER); compMapRender = ArenaAlloc(&arenaAlloc, sizeof(MapRender));
 //     compCamera = ArenaAlloc(&arenaAlloc, sizeof(CameraComp));
 //     compPlayer = ArenaAlloc(&arenaAlloc, sizeof(PlayerComp));
 //     compGun = ArenaAlloc(&arenaAlloc, sizeof(GunComp));
@@ -325,7 +334,8 @@ static void removeTransformComponent(int transfId) {
 //     }
 //
 //     compSpriteRender[compId] = (SpriteRender){
-//         .enabled = true, .sprite = {0}, .pivot = Vector2Zero(), .tint = WHITE, .flipX = false, .flipY = false};
+//         .enabled = true, .sprite = {0}, .pivot = Vector2Zero(), .tint = WHITE, .flipX
+//         = false, .flipY = false};
 //
 //     *spriteRender = &compSpriteRender[compId];
 //     return compId;
@@ -443,7 +453,8 @@ static void removeTransformComponent(int transfId) {
 //
 // void SpriteRenderSetSprite(SpriteRender *spriteRender, Sprite sprite) {
 //     spriteRender->sprite = sprite;
-//     spriteRender->pivot = (Vector2) {sprite.source.width / 2.0f, sprite.source.height / 2.0f };
+//     spriteRender->pivot = (Vector2) {sprite.source.width / 2.0f, sprite.source.height
+//     / 2.0f };
 // }
 //
 // void SystemMapInit(int mapEntity) {
@@ -471,7 +482,8 @@ static void removeTransformComponent(int transfId) {
 //                 float invY = map->height - 1 - y;
 //                 Rectangle src = tile.sprite.source;
 //                 Rectangle dest = {x * mapRender->tileWidth,
-//                                   invY * mapRender->tileHeight, src.width, src.height};
+//                                   invY * mapRender->tileHeight, src.width,
+//                                   src.height};
 //                 src.height = -src.height;
 //                 DrawTexturePro(tile.sprite.tex, src, dest, Vector2Zero(), 0, WHITE);
 //             }
@@ -555,7 +567,8 @@ static void removeTransformComponent(int transfId) {
 //     compCamera->camera.offset = compCamera->offset;
 // }
 //
-// void SystemPlayerUpdate(int playerEntity, Vector2 input, Vector2 mousePos, float dt) {
+// void SystemPlayerUpdate(int playerEntity, Vector2 input, Vector2 mousePos, float dt)
+// {
 //     int transformCompId = entities[playerEntity].components[COMP_TRANSFORM];
 //     int spriteCompId = entities[playerEntity].components[COMP_SPRITERENDER];
 //     int animCompId = entities[playerEntity].components[COMP_ANIMRENDER];
@@ -589,10 +602,11 @@ static void removeTransformComponent(int transfId) {
 // void SystemGunUpdate(int gunId, Vector2 mousePos, float dt) {
 //     int gunTransformId = entities[gunId].components[COMP_TRANSFORM];
 //     int gunSpriteRenderId = entities[gunId].components[COMP_SPRITERENDER];
-//     if (gunTransformId == NULL_ENTITY_COMP || gunSpriteRenderId == NULL_ENTITY_COMP) {
+//     if (gunTransformId == NULL_ENTITY_COMP || gunSpriteRenderId == NULL_ENTITY_COMP)
+//     {
 //         return;
 //     }
-//    
+//
 //     TransformComp *gunTransform = &compTransform[gunTransformId];
 //     SpriteRender *gunSpriteRender = &compSpriteRender[gunSpriteRenderId];
 //
@@ -605,8 +619,8 @@ static void removeTransformComponent(int transfId) {
 //         gunSpriteRender->flipY = true;
 //     }
 //
-//     // gunTransform->position = Vector2Add(compGun->playerTransf->position, offsetCalc);
-//     gunTransform->position = compGun->playerTransf->position;
+//     // gunTransform->position = Vector2Add(compGun->playerTransf->position,
+//     offsetCalc); gunTransform->position = compGun->playerTransf->position;
 //     gunTransform->rotation = rotation;
 //
 //     // DrawCircleV(, 2.0f, RED);
