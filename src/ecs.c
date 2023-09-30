@@ -114,10 +114,6 @@ void *GetComponent(CompType compType, int entityId) {
     return NULL;
 }
 
-int GetComponentId(CompType compType, int entityId) {
-    return entities[entityId].components[compType];
-}
-
 void RegisterComponentDef(CompType compType, ComponentDef componentDef) {
     componentDefs[compType] = componentDef;
 }
