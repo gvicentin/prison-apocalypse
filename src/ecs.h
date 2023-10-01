@@ -5,7 +5,7 @@
 
 #define MAX_ENTITIES   1024
 #define MAX_COMPONENTS 32
-#define MAX_SYSTEMS    32
+#define MAX_VIEWS      32
 
 #define MAX_COMPONENT_TRANSFORM    1024
 #define MAX_COMPONENT_RENDER       512
@@ -26,15 +26,16 @@ typedef enum {
 } CompType;
 
 typedef enum {
-    SYSTEM_RENDER = 0,
-    SYSTEM_SHAPE_RENDER,
-    SYSTEM_ANIM_RENDER,
-    SYSTEM_COUNT
-} SystemType;
+    VIEW_RENDER = 0,
+    VIEW_SHAPE_RENDER,
+    VIEW_ANIM_RENDER,
+    VIEW_COUNT
+} ViewType;
 
 typedef struct Entity {
     bool enabled;
-    int components[COMPONENT_COUNT];
+    int components[MAX_COMPONENTS];
+    int componentBits;
 } Entity;
 
 typedef struct ComponentDef {
@@ -42,9 +43,6 @@ typedef struct ComponentDef {
     void *(*getCallback)(int);
     void (*removeCallback)(int);
 } ComponentDef;
-
-typedef struct System {
-} System;
 
 typedef struct TransformComp {
     bool enabled;
@@ -69,8 +67,16 @@ void RemoveComponent(CompType compType, int entityId);
 
 void RegisterComponentDef(CompType compType, ComponentDef component);
 
-void AddEntityToSystem(SystemType sysType, int entityId);
+int CreateTransformComponent(void **transfComp);
 
-void RemoveEntityFromSystem(SystemType sysType, int entityId);
+void RemoveTransformComponent(int transfId);
+
+void *GetTransformComponent(int transfId);
+
+void RegisterViewComponent(ViewType viewType, CompType compType);
+
+int GetEntityFromView(ViewType viewType);
+
+int *GetEntitiesFromView(ViewType viewType, int *count);
 
 #endif // !ECS_H

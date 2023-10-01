@@ -46,20 +46,21 @@ typedef struct MapRenderComp {
 } MapRenderComp;
 
 int InitRenderSystems(void);
-
 void DestroyRenderSystems(void);
 
-int createRenderComponent(void **renderComp);
-int createShapeRenderComponent(void **shapeRenderComp);
+int CreateRenderComponent(void **renderComp);
+int CreateShapeRenderComponent(void **shapeRenderComp);
+int CreateAnimRenderComponent(void **animRenderComp);
 
-void removeRenderComponent(int renderCompId);
-void removeShapeRenderComponent(int shapeRenderCompId);
+void RemoveRenderComponent(int renderCompId);
+void RemoveRenderShapeComponent(int shapeRenderCompId);
+void RemoveAnimRenderComponent(int animRenderCompId);
 
-void *getRenderComponent(int renderCompId);
-void *getShapeRenderComponent(int shapeRenderCompId);
-
-void addEntityToRenderSystem(int entityId);
+void *GetRenderComponent(int renderCompId);
+void *GetShapeRenderComponent(int shapeRenderCompId);
+void *GetAnimationRenderComponent(int animRenderCompId);
 
 void UpdateRenderSystem(void);
+void UpdateAnimationSystem(float dt);
 
 #endif // !RENDER_H

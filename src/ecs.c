@@ -6,19 +6,16 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#define ARENA_BUF_LEN Kilobyte(100)
+#define ARENA_BUF_LEN Kilobyte(500)
 
 static Arena arenaAlloc;
-
 static Entity *entities;
-
-static TransformComp *transformComponents;
-
 static ComponentDef *componentDefs;
 
-static int createTransformComponent(void **transfComp);
-static void removeTransformComponent(int transfId);
-static void *getTransformComponent(int transfId);
+static int *views;
+static AList viewsList;
+
+static TransformComp *transformComponents;
 
 int InitECS(void) {
     void *backingBuffer = malloc(ARENA_BUF_LEN);
@@ -29,13 +26,17 @@ int InitECS(void) {
     }
 
     entities = ArenaAlloc(&arenaAlloc, sizeof(Entity) * MAX_ENTITIES);
-    transformComponents = ArenaAlloc(&arenaAlloc, sizeof(TransformComp) * MAX_ENTITIES);
     componentDefs = ArenaAlloc(&arenaAlloc, sizeof(ComponentDef) * MAX_COMPONENTS);
+    transformComponents = ArenaAlloc(&arenaAlloc, sizeof(TransformComp) * MAX_ENTITIES);
+
+    views = ArenaAlloc(&arenaAlloc, sizeof(int) * MAX_VIEWS);
+    AListInit(&viewsList, &arenaAlloc);
+    AListExpand(&viewsList, MAX_ENTITIES);
 
     ComponentDef transformDef = {
-        .createCallback = createTransformComponent,
-        .removeCallback = removeTransformComponent,
-        .getCallback = getTransformComponent
+        .createCallback = CreateTransformComponent,
+        .removeCallback = RemoveTransformComponent,
+        .getCallback = GetTransformComponent
     };
     RegisterComponentDef(COMPONENT_TRANSFORM, transformDef);
 
@@ -64,6 +65,11 @@ int CreateEntity(void) {
     }
 
     entities[entityId].enabled = true;
+    entities[entityId].componentBits = 0;
+    for (int compType = 0; compType < MAX_COMPONENTS; ++compType) {
+        entities[entityId].components[compType] = NULL_COMPONENT;
+    }
+
     return entityId;
 }
 
@@ -76,7 +82,7 @@ void RemoveEntity(int entityId) {
     removeEntity->enabled = false;
     for (int compType = 0; compType < MAX_COMPONENTS; ++compType) {
         if (removeEntity->components[compType] != NULL_COMPONENT) {
-            RemoveComponent(entityId, compType);
+            RemoveComponent(compType, entityId);
             removeEntity->components[compType] = NULL_COMPONENT;
         }
     }
@@ -93,6 +99,7 @@ void *CreateComponent(CompType compType, int entityId) {
 
     compId = createComponent(&component);
     entities[entityId].components[compType] = compId;
+    entities[entityId].componentBits |= 1 << compType;
 
     return component;
 }
@@ -118,7 +125,7 @@ void RegisterComponentDef(CompType compType, ComponentDef componentDef) {
     componentDefs[compType] = componentDef;
 }
 
-static int createTransformComponent(void **transfComp) {
+int CreateTransformComponent(void **transfComp) {
     int compId;
 
     for (compId = 0; compId < MAX_COMPONENT_TRANSFORM; ++compId) {
@@ -141,12 +148,41 @@ static int createTransformComponent(void **transfComp) {
     return compId;
 }
 
-static void removeTransformComponent(int transfId) {
+void RemoveTransformComponent(int transfId) {
     transformComponents[transfId].enabled = false;
 }
 
-static void *getTransformComponent(int transfId) {
+void *GetTransformComponent(int transfId) {
     return &transformComponents[transfId];
+}
+
+void RegisterViewComponent(ViewType viewType, CompType compType) {
+    views[viewType] |= 1 << compType;
+}
+
+int GetEntityFromView(ViewType viewType) {
+    for (int entityId = 0; entityId < MAX_ENTITIES; ++entityId) {
+        int componentBits = entities[entityId].componentBits & views[viewType];
+        if (entities[entityId].enabled && componentBits == views[viewType]) {
+            return entityId;
+        }
+    }
+
+    return NULL_ENTITY;
+}
+
+int *GetEntitiesFromView(ViewType viewType, int *count) {
+    AListReset(&viewsList);
+
+    for (int entityId = 0; entityId < MAX_ENTITIES; ++entityId) {
+        int componentBits = entities[entityId].componentBits & views[viewType];
+        if (entities[entityId].enabled && componentBits == views[viewType]) {
+            AListAppend(&viewsList, entityId);
+        }
+    }
+
+    *count = viewsList.size;
+    return viewsList.elmnts;
 }
 
 // #include "ecs.h"
