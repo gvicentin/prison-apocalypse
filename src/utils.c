@@ -117,6 +117,11 @@ void AListInit(AList *list, Arena *arena) {
     list->size = 0;
 }
 
+void AListExpand(AList *list, size_t newCapacity) {
+    list->elmnts = ArenaRealloc(list->arena, list->elmnts, list->capacity * sizeof(int),
+                                newCapacity * sizeof(int));
+}
+
 void AListReset(AList *list) {
     list->size = 0;
 }
@@ -183,7 +188,8 @@ static void HTableSetEntry(Arena *arena, HTableEntry *entries, size_t capacity,
 }
 
 void HTableExpand(HTable *table, size_t newCapacity) {
-    HTableEntry *newEntries = ArenaAlloc(table->arena, newCapacity * sizeof(HTableEntry));
+    HTableEntry *newEntries =
+        ArenaAlloc(table->arena, newCapacity * sizeof(HTableEntry));
 
     for (size_t i = 0; i < table->capacity; ++i) {
         HTableEntry entry = table->entries[i];

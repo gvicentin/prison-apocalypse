@@ -1,95 +1,82 @@
 #ifndef ECS_H
 #define ECS_H
 
-#include <stdbool.h>
 #include "raylib.h"
-#include "assets.h"
-#include "utils.h"
+
+#define MAX_ENTITIES   1024
+#define MAX_COMPONENTS 32
+#define MAX_VIEWS      32
+
+#define MAX_COMPONENT_TRANSFORM    1024
+#define MAX_COMPONENT_RENDER       512
+#define MAX_COMPONENT_SHAPE_RENDER 128
+#define MAX_COMPONENT_ANIM_RENDER  128
+#define MAX_COMPONENT_MAP_RENDER   4
+
+#define NULL_ENTITY    -1
+#define NULL_COMPONENT -1
 
 typedef enum {
-    COMP_TRANSFORM = 0,
-    COMP_SPRITERENDER,
-    COMP_ANIMRENDER,
-    COMP_MAPRENDER,
-    COMP_CAMERA,
-    COMP_PLAYER,
-    COMP_COUNT
+    COMPONENT_TRANSFORM = 0,
+    COMPONENT_RENDER,
+    COMPONENT_SHAPE_RENDER,
+    COMPONENT_ANIMATION_RENDER,
+    COMPONENT_MAP_RENDER,
+    COMPONENT_COUNT
 } CompType;
+
+typedef enum {
+    VIEW_RENDER = 0,
+    VIEW_SHAPE_RENDER,
+    VIEW_ANIM_RENDER,
+    VIEW_COUNT
+} ViewType;
 
 typedef struct Entity {
     bool enabled;
-    int components[COMP_COUNT];
+    int components[MAX_COMPONENTS];
+    int componentBits;
 } Entity;
+
+typedef struct ComponentDef {
+    int (*createCallback)(void **);
+    void *(*getCallback)(int);
+    void (*removeCallback)(int);
+} ComponentDef;
 
 typedef struct TransformComp {
     bool enabled;
-
     Vector2 position;
     Vector2 scale;
     float rotation;
 } TransformComp;
 
-typedef struct SpriteRender {
-    bool enabled;
+int InitECS(void);
 
-    Sprite sprite;
-    Color tint;
-    bool flipX, flipY;
-} SpriteRender;
+void DestroyECS(void);
 
-typedef struct AnimRender {
-    bool enabled;
+int CreateEntity(void);
 
-    Animation anim;
-    float frameTime;
-} AnimRender;
+void RemoveEntity(int entityId);
 
-typedef struct MapRender {
-    bool enabled;
+void *CreateComponent(CompType compType, int entityId);
 
-    Map map;
-    int tileWidth, tileHeight;
-    int screenWidth, screenHeight;
-    int renderLayersCount;
-    RenderTexture2D renderLayers[MAX_MAP_LAYERS];
-    Vector2 scale;
-} MapRender;
+void *GetComponent(CompType compType, int entityId);
 
-typedef struct CameraComp {
-    bool enabled;
+void RemoveComponent(CompType compType, int entityId);
 
-    Camera2D camera;
-    TransformComp *targetTransf;
-    Vector2 offset;
-} CameraComp;
+void RegisterComponentDef(CompType compType, ComponentDef component);
 
-typedef struct PlayerComp {
-    bool enabled;
+int CreateTransformComponent(void **transfComp);
 
-    float speed;
-    Animation idleAnim;
-    Animation runAnim;
-} PlayerComp;
+void RemoveTransformComponent(int transfId);
 
-int EntityCompInit(void);
-void EntityCompReset(void);
-void EntityCompDestroy(void);
+void *GetTransformComponent(int transfId);
 
-int EntityCreate(void);
-void EntityRemove(int entityId);
+void RegisterViewComponent(ViewType viewType, CompType compType);
 
-void *ComponentCreate(int entityId, CompType type);
-void ComponentRemove(int entityId, CompType type);
+int GetEntityFromView(ViewType viewType);
 
-void SystemRenderEntities(AList *renderEntities);
-
-void SystemAnimationUpdate(AList *animEntities, float dt);
-
-void SystemMapInit(int mapEntity);
-void SystemMapRenderLayer(int mapEntity, int layer);
-
-void SystemCameraUpdate(int cameraEntity);
-
-void SystemPlayerUpdate(int playerEntity, Vector2 input, float dt);
+int *GetEntitiesFromView(ViewType viewType, int *count);
 
 #endif // !ECS_H

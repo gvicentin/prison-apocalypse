@@ -59,6 +59,7 @@ void TempArenaEnd(TempArena temp);
 // ArrayList
 //
 void AListInit(AList *list, Arena *arena);
+void AListExpand(AList *list, size_t newCapacity);
 void AListReset(AList *list);
 void AListAppend(AList *list, int elmnt);
 

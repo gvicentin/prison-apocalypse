@@ -29,33 +29,33 @@ exec_version() {
 }
 
 sync_assets() {
-    local __up=${1-"0"}
+    local up=${1-"0"}
 
-    local __aws=$(which aws)
+    local aws=$(which aws)
     if [ "$?" -ne 0 ]; then 
         echo "{$RED}Please, install AWS CLI to synchronize game's assets{$RESET}"
         exit 1
     fi
 
-    local __source="$ASSETS_BUCKET"
-    local __target="$ASSETS_DIR"
-    if [ "${__up}" -eq 1 ]; then
-        __source="$ASSETS_DIR"
-        __target="$ASSETS_BUCKET"
+    local source="$ASSETS_BUCKET"
+    local target="$ASSETS_DIR"
+    if [ "${up}" -eq 1 ]; then
+        source="$ASSETS_DIR"
+        target="$ASSETS_BUCKET"
     fi
 
     echo "${YELLOW}Syncronizing assets${RESET}"
-    ${__aws} s3 sync ${__source} ${__target} --exclude "*" --include "*.png"
+    ${aws} s3 sync ${source} ${target} --exclude "*" --include "*.png"
 
     echo "${GREEN}Everything is up to date${RESET}"
 }
 
-__is_upstream="0"
+is_upstream="0"
 
 case "$1" in
-    -u | --upstrem) __is_upstream="1" ;;
+    -u | --upstrem) is_upstream="1" ;;
     -v | --version) exec_version && exit 0 ;;
     -h | --help) exec_help && exit 0 ;; 
 esac
 
-sync_assets ${__is_upstream}
+sync_assets ${is_upstream}

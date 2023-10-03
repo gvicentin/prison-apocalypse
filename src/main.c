@@ -1,9 +1,14 @@
+#include <math.h>
 #include <stdlib.h>
 #include "assets.h"
 #include "ecs.h"
 #include "utils.h"
+#include "render.h"
 #include "raylib.h"
 #include "raymath.h"
+
+static int CreatePlayer(Vector2 position, bool flip);
+static int CreateGun(Vector2 position, bool flip);
 
 //--------------------------------------------------------------------------------------
 // Program main entry point
@@ -34,95 +39,45 @@ int main(void) {
     }
 
     // init ecs
-    EntityCompInit();
+    InitECS();
+    InitRenderSystems();
 
-    Arena arena = {0};
-    AList renderEntities = {0};
-    AList animEntities = {0};
-
-    ArenaInit(&arena, malloc(Kilobyte(100)), Kilobyte(100));
-    AListInit(&renderEntities, &arena);
-    AListInit(&animEntities, &arena);
-
-    int player = EntityCreate();
-
-    TransformComp *playerTransf = ComponentCreate(player, COMP_TRANSFORM);
-    playerTransf->position = (Vector2) {100, 100};
-    playerTransf->scale = (Vector2) {2, 2};
-
-    ComponentCreate(player, COMP_SPRITERENDER);
-    AListAppend(&renderEntities, player);
-
-    AnimRender *playerAR = ComponentCreate(player, COMP_ANIMRENDER);
-    playerAR->anim = AssetsGetAnimation("policeman_idle");
-    AListAppend(&animEntities, player);
-
-    PlayerComp *playerComp = ComponentCreate(player, COMP_PLAYER);
-    playerComp->speed = 150.0f;
-    playerComp->idleAnim = AssetsGetAnimation("policeman_idle");
-    playerComp->runAnim = AssetsGetAnimation("policeman_run");
-
-    int gun = EntityCreate();
-    
-    TransformComp *gunTransf = ComponentCreate(gun, COMP_TRANSFORM);
-    gunTransf->position = (Vector2) {100, 100};
-    gunTransf->scale = (Vector2) {2, 2};
-
-    SpriteRender *gunSR = ComponentCreate(gun, COMP_SPRITERENDER);
-    gunSR->sprite = AssetsGetSprite("rifle");
-    AListAppend(&renderEntities, gun);
-
-    int map = EntityCreate();
-
-    MapRender *mapRender = ComponentCreate(map, COMP_MAPRENDER);
-    mapRender->map = AssetGetMap("prison");
-    mapRender->tileWidth = 32;
-    mapRender->tileHeight = 32;
-    mapRender->scale = (Vector2) {2, 2};
-    mapRender->renderLayersCount = 1;
-
-    int camera = EntityCreate();
-    
-    CameraComp *cameraComp = ComponentCreate(camera, COMP_CAMERA);
-    cameraComp->targetTransf = playerTransf;
-    cameraComp->offset = (Vector2) {screenWidth/2.0f, screenHeight/2.0f};
-
-    SystemMapInit(map);
-
+    // player 1
+    Vector2 centerPoint = {415, 270};
+    int player = CreatePlayer((Vector2) {350, 200}, false);
+    int gun = CreateGun(centerPoint, false);
     //----------------------------------------------------------------------------------
 
     // Main game loop
     while (!WindowShouldClose()) {
         // Update
-        //------------------------------------------------------------------------------
-        Vector2 input = Vector2Zero();
-        if (IsKeyDown(KEY_W)) {
-            input.y -= 1;
-        }
-        if (IsKeyDown(KEY_D)) {
-            input.x += 1;
-        }
-        if (IsKeyDown(KEY_S)) {
-            input.y += 1;
-        }
-        if (IsKeyDown(KEY_A)) {
-            input.x -= 1;
-        }
+        TransformComp *gunTransf = GetComponent(COMPONENT_TRANSFORM, gun);
+        RenderComp *gunRender = GetComponent(COMPONENT_RENDER, gun);
+        RenderComp *playerRender = GetComponent(COMPONENT_RENDER, player);
 
-        SystemPlayerUpdate(player, Vector2Normalize(input), GetFrameTime());
-        SystemAnimationUpdate(&animEntities, GetFrameTime());
-        SystemCameraUpdate(camera);
+        Vector2 mousePos = { GetMouseX(), GetMouseY() };
+        Vector2 direction = Vector2Subtract(mousePos, centerPoint);
+        float rotation = atan2f(direction.y, direction.x) * RAD2DEG;
+        if (rotation > -90.0f && rotation < 90.0f) {
+            gunRender->flipY = false;
+            playerRender->flipX = false;
+            gunRender->zOrder = 2;
+        } else {
+            gunRender->flipY = true;
+            playerRender->flipX = true;
+            gunRender->zOrder = 0;
+        }
+        gunTransf->rotation = rotation;
+        //------------------------------------------------------------------------------
         //------------------------------------------------------------------------------
 
         // Draw
         //------------------------------------------------------------------------------
         BeginDrawing();
-        ClearBackground(BLACK);
+        ClearBackground(GRAY);
 
-        BeginMode2D(cameraComp->camera);
-        SystemMapRenderLayer(map, 0);
-        SystemRenderEntities(&renderEntities);
-        EndMode2D();
+        UpdateAnimationSystem(GetFrameTime());
+        UpdateRenderSystem();
 
         EndDrawing();
         //------------------------------------------------------------------------------
@@ -130,11 +85,43 @@ int main(void) {
 
     // De-Initialization
     //----------------------------------------------------------------------------------
+    DestroyECS();
+    DestroyRenderSystems();
     AssetsDestroy();
-    EntityCompDestroy();
-    free(arena.buff);
     CloseWindow(); // Close window and OpenGL context
     //----------------------------------------------------------------------------------
 
     return 0;
+}
+
+static int CreatePlayer(Vector2 position, bool flip) {
+    int player = CreateEntity();
+
+    TransformComp *playerTransf = CreateComponent(COMPONENT_TRANSFORM, player);
+    playerTransf->position = position;
+    playerTransf->scale = (Vector2) {4, 4};
+
+    RenderComp *playerRender = CreateComponent(COMPONENT_RENDER, player);
+    playerRender->sprite = AssetsGetSprite("policeman_idle_0");
+    playerRender->flipX = flip;
+
+    AnimRenderComp *playerAnim = CreateComponent(COMPONENT_ANIMATION_RENDER, player);
+    playerAnim->anim = AssetsGetAnimation("policeman_idle");
+
+    return player;
+}
+
+static int CreateGun(Vector2 position, bool flip) {
+    int gun = CreateEntity();
+
+    TransformComp *gunTransf = CreateComponent(COMPONENT_TRANSFORM, gun);
+    gunTransf->position = position;
+    gunTransf->scale = (Vector2) {4, 4};
+
+    RenderComp *gunRender = CreateComponent(COMPONENT_RENDER, gun);
+    gunRender->sprite = AssetsGetSprite("rifle");
+    gunRender->pivot = (Vector2) {15.0f, 15.0f};
+    gunRender->flipX = flip;
+
+    return gun;
 }
