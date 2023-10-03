@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stdlib.h>
 #include "assets.h"
 #include "ecs.h"
@@ -6,8 +7,8 @@
 #include "raylib.h"
 #include "raymath.h"
 
-static int CreatePlayer(Vector2 position);
-static int CreateGun(Vector2 position);
+static int CreatePlayer(Vector2 position, bool flip);
+static int CreateGun(Vector2 position, bool flip);
 
 //--------------------------------------------------------------------------------------
 // Program main entry point
@@ -42,22 +43,31 @@ int main(void) {
     InitRenderSystems();
 
     // player 1
-    CreatePlayer((Vector2) {200, 200});
-    int gun = CreateGun((Vector2) {200, 200});
-
-    // player 2
-    int player = CreatePlayer((Vector2) {500, 200});
-    CreateGun((Vector2) {500, 200});
-
-    RemoveEntity(gun);
-    RemoveEntity(player);
-
-    int newGun = CreateGun((Vector2) {100, 50});
+    Vector2 centerPoint = {415, 270};
+    int player = CreatePlayer((Vector2) {350, 200}, false);
+    int gun = CreateGun(centerPoint, false);
     //----------------------------------------------------------------------------------
 
     // Main game loop
     while (!WindowShouldClose()) {
         // Update
+        TransformComp *gunTransf = GetComponent(COMPONENT_TRANSFORM, gun);
+        RenderComp *gunRender = GetComponent(COMPONENT_RENDER, gun);
+        RenderComp *playerRender = GetComponent(COMPONENT_RENDER, player);
+
+        Vector2 mousePos = { GetMouseX(), GetMouseY() };
+        Vector2 direction = Vector2Subtract(mousePos, centerPoint);
+        float rotation = atan2f(direction.y, direction.x) * RAD2DEG;
+        if (rotation > -90.0f && rotation < 90.0f) {
+            gunRender->flipY = false;
+            playerRender->flipX = false;
+            gunRender->zOrder = 2;
+        } else {
+            gunRender->flipY = true;
+            playerRender->flipX = true;
+            gunRender->zOrder = 0;
+        }
+        gunTransf->rotation = rotation;
         //------------------------------------------------------------------------------
         //------------------------------------------------------------------------------
 
@@ -84,7 +94,7 @@ int main(void) {
     return 0;
 }
 
-static int CreatePlayer(Vector2 position) {
+static int CreatePlayer(Vector2 position, bool flip) {
     int player = CreateEntity();
 
     TransformComp *playerTransf = CreateComponent(COMPONENT_TRANSFORM, player);
@@ -93,6 +103,7 @@ static int CreatePlayer(Vector2 position) {
 
     RenderComp *playerRender = CreateComponent(COMPONENT_RENDER, player);
     playerRender->sprite = AssetsGetSprite("policeman_idle_0");
+    playerRender->flipX = flip;
 
     AnimRenderComp *playerAnim = CreateComponent(COMPONENT_ANIMATION_RENDER, player);
     playerAnim->anim = AssetsGetAnimation("policeman_idle");
@@ -100,7 +111,7 @@ static int CreatePlayer(Vector2 position) {
     return player;
 }
 
-static int CreateGun(Vector2 position) {
+static int CreateGun(Vector2 position, bool flip) {
     int gun = CreateEntity();
 
     TransformComp *gunTransf = CreateComponent(COMPONENT_TRANSFORM, gun);
@@ -109,7 +120,8 @@ static int CreateGun(Vector2 position) {
 
     RenderComp *gunRender = CreateComponent(COMPONENT_RENDER, gun);
     gunRender->sprite = AssetsGetSprite("rifle");
-    gunRender->pivot = (Vector2) {0.2f, 0.6f};
+    gunRender->pivot = (Vector2) {15.0f, 15.0f};
+    gunRender->flipX = flip;
 
     return gun;
 }

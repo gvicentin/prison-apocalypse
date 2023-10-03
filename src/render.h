@@ -19,6 +19,7 @@ typedef struct RenderComp {
     Vector2 pivot;
     Color tint;
     bool flipX, flipY;
+    int zOrder;
 } RenderComp;
 
 typedef struct ShapeRenderComp {

@@ -67,18 +67,27 @@ void DestroyRenderSystems(void) {
     free(arenaAlloc.buff);
 }
 
+static int compareRenderOrder(const void *entityA, const void *entityB) {
+    int aId = *((int *)entityA);
+    int bId = *((int *)entityB);
+
+    RenderComp *renderA = GetComponent(COMPONENT_RENDER, aId);
+    RenderComp *renderB = GetComponent(COMPONENT_RENDER, bId);
+
+    return renderA->zOrder - renderB->zOrder;
+}
+
 void UpdateRenderSystem(void) {
     int entitiesCount = 0;
     int *renderEntities = GetEntitiesFromView(VIEW_RENDER, &entitiesCount);
+
+    // sort entities before rendering
+    qsort(renderEntities, entitiesCount, sizeof(int), compareRenderOrder);
 
     for (int renderEntityId = 0; renderEntityId < entitiesCount; ++renderEntityId) {
         int entityId = renderEntities[renderEntityId];
         TransformComp *transfComp = GetComponent(COMPONENT_TRANSFORM, entityId);
         RenderComp *renderComp = GetComponent(COMPONENT_RENDER, entityId);
-
-        if (transfComp == NULL || renderComp == NULL) {
-            continue;
-        }
 
         Rectangle src = renderComp->sprite.source;
         src.width = renderComp->flipX ? -src.width : src.width;
@@ -89,11 +98,7 @@ void UpdateRenderSystem(void) {
                           renderComp->sprite.source.height * transfComp->scale.y};
 
         Vector2 pivotCalc = renderComp->pivot;
-        pivotCalc.x = renderComp->flipX ? 1.0f - pivotCalc.x : pivotCalc.x;
-        pivotCalc.y = renderComp->flipY ? 1.0f - pivotCalc.y : pivotCalc.y;
-        pivotCalc.x *= renderComp->sprite.source.width;
-        pivotCalc.y *= renderComp->sprite.source.height;
-        pivotCalc = Vector2Multiply(pivotCalc, transfComp->scale);
+        pivotCalc.y = renderComp->flipY ? dest.height - pivotCalc.y : pivotCalc.y;
 
         Color bgColor = GREEN;
         bgColor.a = 60;
@@ -137,10 +142,11 @@ int CreateRenderComponent(void **renderComp) {
 
     renderComponents[compId] = (RenderComp){.enabled = true,
                                             .sprite = {0},
-                                            .pivot = (Vector2){0.5f, 0.5f},
+                                            .pivot = Vector2Zero(),
                                             .tint = WHITE,
                                             .flipX = false,
-                                            .flipY = false};
+                                            .flipY = false,
+                                            .zOrder = 1};
 
     *renderComp = &renderComponents[compId];
     return compId;
