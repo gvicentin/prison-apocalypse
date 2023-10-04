@@ -44,8 +44,18 @@ int main(void) {
 
     // player 1
     Vector2 centerPoint = {415, 270};
-    int player = CreatePlayer((Vector2) {350, 200}, false);
+    int player = CreatePlayer(centerPoint, false);
     int gun = CreateGun(centerPoint, false);
+
+    int map = CreateEntity();
+    MapRenderComp *mapRenderComp = CreateComponent(COMPONENT_MAP_RENDER, map);
+    mapRenderComp->tileWidth = 32;
+    mapRenderComp->tileHeight = 32;
+    mapRenderComp->renderLayersCount = 1;
+    mapRenderComp->scale = (Vector2) {4, 4};
+    mapRenderComp->map = AssetGetMap("prison");
+
+    InitMapLayers(map);
     //----------------------------------------------------------------------------------
 
     // Main game loop
@@ -74,10 +84,12 @@ int main(void) {
         // Draw
         //------------------------------------------------------------------------------
         BeginDrawing();
-        ClearBackground(GRAY);
+        ClearBackground(BLACK);
 
         UpdateAnimationSystem(GetFrameTime());
-        UpdateRenderSystem();
+
+        RenderMapLayerSystem(map, 0);
+        RenderEntitiesSystem();
 
         EndDrawing();
         //------------------------------------------------------------------------------
@@ -103,6 +115,7 @@ static int CreatePlayer(Vector2 position, bool flip) {
 
     RenderComp *playerRender = CreateComponent(COMPONENT_RENDER, player);
     playerRender->sprite = AssetsGetSprite("policeman_idle_0");
+    playerRender->pivot = (Vector2) {64.0f, 64.0f};
     playerRender->flipX = flip;
 
     AnimRenderComp *playerAnim = CreateComponent(COMPONENT_ANIMATION_RENDER, player);

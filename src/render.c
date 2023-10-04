@@ -13,7 +13,6 @@
 static Arena arenaAlloc;
 
 static RenderComp *renderComponents;
-static ShapeRenderComp *shapeRenderComponents;
 static AnimRenderComp *animRenderComponents;
 static MapRenderComp *mapRenderComponents;
 
@@ -28,12 +27,9 @@ int InitRenderSystems(void) {
     // make room for components
     renderComponents =
         ArenaAlloc(&arenaAlloc, sizeof(RenderComp) * MAX_COMPONENT_RENDER);
-    shapeRenderComponents =
-        ArenaAlloc(&arenaAlloc, sizeof(ShapeRenderComp) * MAX_COMPONENT_SHAPE_RENDER);
     animRenderComponents =
         ArenaAlloc(&arenaAlloc, sizeof(AnimRenderComp) * MAX_COMPONENT_ANIM_RENDER);
-    mapRenderComponents =
-        ArenaAlloc(&arenaAlloc, sizeof(MapRenderComp) * MAX_COMPONENT_MAP_RENDER);
+    mapRenderComponents = ArenaAlloc(&arenaAlloc, sizeof(MapRenderComp) * MAX_COMPONENT_MAP_RENDER);
 
     // register components callbacks
     ComponentDef renderDef = {.createCallback = CreateRenderComponent,
@@ -41,15 +37,15 @@ int InitRenderSystems(void) {
                               .removeCallback = RemoveRenderComponent};
     RegisterComponentDef(COMPONENT_RENDER, renderDef);
 
-    ComponentDef shapeRenderDef = {.createCallback = CreateShapeRenderComponent,
-                                   .getCallback = GetShapeRenderComponent,
-                                   .removeCallback = RemoveRenderShapeComponent};
-    RegisterComponentDef(COMPONENT_SHAPE_RENDER, shapeRenderDef);
-
     ComponentDef animRenderDef = {.createCallback = CreateAnimRenderComponent,
                                   .getCallback = GetAnimationRenderComponent,
                                   .removeCallback = RemoveAnimRenderComponent};
     RegisterComponentDef(COMPONENT_ANIMATION_RENDER, animRenderDef);
+
+    ComponentDef mapRenderDef = {.createCallback = CreateMapRenderComponent,
+                                  .getCallback = GetMapRenderComponent,
+                                  .removeCallback = RemoveMapRenderComponent};
+    RegisterComponentDef(COMPONENT_MAP_RENDER, mapRenderDef);
 
     RegisterViewComponent(VIEW_RENDER, COMPONENT_TRANSFORM);
     RegisterViewComponent(VIEW_RENDER, COMPONENT_RENDER);
@@ -77,7 +73,7 @@ static int compareRenderOrder(const void *entityA, const void *entityB) {
     return renderA->zOrder - renderB->zOrder;
 }
 
-void UpdateRenderSystem(void) {
+void RenderEntitiesSystem(void) {
     int entitiesCount = 0;
     int *renderEntities = GetEntitiesFromView(VIEW_RENDER, &entitiesCount);
 
@@ -98,14 +94,15 @@ void UpdateRenderSystem(void) {
                           renderComp->sprite.source.height * transfComp->scale.y};
 
         Vector2 pivotCalc = renderComp->pivot;
+        pivotCalc.x = renderComp->flipX ? dest.width - pivotCalc.x : pivotCalc.x;
         pivotCalc.y = renderComp->flipY ? dest.height - pivotCalc.y : pivotCalc.y;
 
         Color bgColor = GREEN;
         bgColor.a = 60;
-        DrawRectanglePro(dest, pivotCalc, transfComp->rotation, bgColor);
+        // DrawRectanglePro(dest, pivotCalc, transfComp->rotation, bgColor);
         DrawTexturePro(renderComp->sprite.tex, src, dest, pivotCalc,
                        transfComp->rotation, renderComp->tint);
-        DrawCircleV(transfComp->position, 4.0f, RED);
+        // DrawCircleV(transfComp->position, 4.0f, RED);
     }
 }
 
@@ -152,29 +149,6 @@ int CreateRenderComponent(void **renderComp) {
     return compId;
 }
 
-int CreateShapeRenderComponent(void **shapeRenderComp) {
-    int compId;
-
-    for (compId = 0; compId < MAX_COMPONENT_RENDER; ++compId) {
-        if (!renderComponents[compId].enabled)
-            break;
-    }
-
-    assert(compId < MAX_COMPONENT_SHAPE_RENDER);
-    if (compId >= MAX_COMPONENT_SHAPE_RENDER) {
-        *shapeRenderComp = NULL;
-        return NULL_COMPONENT;
-    }
-
-    shapeRenderComponents[compId] = (ShapeRenderComp){.enabled = true,
-                                                      .type = SHAPE_RENDER_RECT,
-                                                      .rect = {0},
-                                                      .center = {0},
-                                                      .radius = 0.0f};
-
-    return compId;
-}
-
 int CreateAnimRenderComponent(void **animRenderComp) {
     int compId;
 
@@ -196,26 +170,89 @@ int CreateAnimRenderComponent(void **animRenderComp) {
     return compId;
 }
 
-void RemoveRenderComponent(int renderCompId) {
-    renderComponents[renderCompId].enabled = false;
+int CreateMapRenderComponent(void **mapRenderComp) {
+    int compId;
+
+    for (compId = 0; compId < MAX_COMPONENT_MAP_RENDER; ++compId) {
+        if (!animRenderComponents[compId].enabled)
+            break;
+    }
+
+    assert(compId < MAX_COMPONENT_MAP_RENDER);
+    if (compId >= MAX_COMPONENT_MAP_RENDER) {
+        *mapRenderComp = NULL;
+        return NULL_COMPONENT;
+    }
+
+    mapRenderComponents[compId] = (MapRenderComp) {0};
+    mapRenderComponents[compId].enabled = true;
+
+    *mapRenderComp = &mapRenderComponents[compId];
+    return compId;
 }
 
-void RemoveRenderShapeComponent(int shapeRenderCompId) {
-    shapeRenderComponents[shapeRenderCompId].enabled = false;
+void RemoveRenderComponent(int renderCompId) {
+    renderComponents[renderCompId].enabled = false;
 }
 
 void RemoveAnimRenderComponent(int animRenderCompId) {
     animRenderComponents[animRenderCompId].enabled = false;
 }
 
+void RemoveMapRenderComponent(int mapRenderCompId) {
+    mapRenderComponents[mapRenderCompId].enabled = false;
+}
+
 void *GetRenderComponent(int renderCompId) {
     return &renderComponents[renderCompId];
 }
 
-void *GetShapeRenderComponent(int shapeRenderCompId) {
-    return &shapeRenderComponents[shapeRenderCompId];
-}
-
 void *GetAnimationRenderComponent(int animRenderCompId) {
     return &animRenderComponents[animRenderCompId];
+}
+
+void *GetMapRenderComponent(int mapRenderCompId) {
+    return &mapRenderComponents[mapRenderCompId];
+}
+
+void InitMapLayers(int mapEntityId) {
+    MapRenderComp *mapRender = GetComponent(COMPONENT_MAP_RENDER, mapEntityId);
+    Map *map = &mapRender->map;
+    int layersCount = mapRender->renderLayersCount;
+
+    for (int layer = 0; layer < layersCount; ++layer) {
+        // create texture and enable for drawing
+        mapRender->renderLayers[layer] = LoadRenderTexture(
+            mapRender->tileWidth * map->width, mapRender->tileHeight * map->height);
+        BeginTextureMode(mapRender->renderLayers[layer]);
+
+        for (int y = 0; y < map->height; ++y) {
+            for (int x = 0; x < map->width; ++x) {
+                int tileId = map->tiles[layer][y * map->width + x];
+                Tile tile = AssetsGetTile(tileId);
+
+                // draw tile to texture layer
+                float invY = map->height - 1 - y;
+                Rectangle src = tile.sprite.source;
+                Rectangle dest = {x * mapRender->tileWidth,
+                                  invY * mapRender->tileHeight, src.width,
+                                  src.height};
+                src.height = -src.height;
+                DrawTexturePro(tile.sprite.tex, src, dest, Vector2Zero(), 0, WHITE);
+            }
+        }
+
+        EndTextureMode();
+    }
+}
+
+void RenderMapLayerSystem(int mapEntityId, int layer) {
+    MapRenderComp *mapRender = GetComponent(COMPONENT_MAP_RENDER, mapEntityId);
+    Texture2D layerTex = mapRender->renderLayers[layer].texture;
+
+    // draw map
+    Rectangle src = {0, 0, layerTex.width, layerTex.height};
+    Rectangle dest = {0, 0, layerTex.width * mapRender->scale.x,
+                      layerTex.height * mapRender->scale.y};
+    DrawTexturePro(layerTex, src, dest, Vector2Zero(), 0, WHITE);
 }
